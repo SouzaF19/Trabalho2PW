@@ -1,0 +1,14 @@
+# Configuracao com senha do banco - nunca versionar
+/config/config.php
+
+# Imagens enviadas pelos usuarios
+/public/uploads/*
+!/public/uploads/.gitkeep
+!/public/uploads/.htaccess
+
+# Sistema operacional / editores
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
