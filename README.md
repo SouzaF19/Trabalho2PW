@@ -59,10 +59,3 @@ database/   schema.sql, seed.sql
 docs/       api.md — o contrato entre backend e editor
 routes.php  mapa de rotas
 ```
-
-**Regra de ouro:** só `public/` é servida pela web. `src/`, `config/` e
-`database/` ficam fora do alcance do navegador.
-
-## Documentação
-
-- [`docs/api.md`](docs/api.md) — contrato da API
