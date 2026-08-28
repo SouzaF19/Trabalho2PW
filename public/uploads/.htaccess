@@ -1,0 +1,10 @@
+# Defesa em profundidade: mesmo que alguem consiga subir um .php disfarcado
+# de imagem, o Apache nao vai executa-lo aqui.
+Options -Indexes
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>

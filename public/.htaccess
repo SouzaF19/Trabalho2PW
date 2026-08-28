@@ -1,0 +1,15 @@
+# Nao listar o conteudo das pastas quando falta um index
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Se o caminho pedido NAO e um arquivo real (!-f)
+    # e NAO e um diretorio real (!-d),
+    # entrega tudo para o front controller.
+    # Assim /assets/css/app.css e servido direto pelo Apache,
+    # mas /api/paginas/1 (que nao existe no disco) vai para o index.php.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
