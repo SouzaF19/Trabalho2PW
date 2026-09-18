@@ -1,10 +1,10 @@
 -- Dados de teste. Rodar DEPOIS de schema.sql.
--- Usuario: teste@cadernos.local  /  senha: 123456
+-- Usuario: admin@admin.com  /  senha: admin123
 USE cadernos;
 
 INSERT INTO usuario (id, nome, email, senha_hash) VALUES
-  (1, 'Usuario de Teste', 'teste@cadernos.local',
-   '$2y$10$wb6mLIb74sMnnz8w28y/SeBJkSSK2jJtJr8O/25TU0jvyVOP4VGxe');
+  (1, 'Administrador', 'admin@admin.com',
+   '$2y$10$FhCLQTY3hIFEvIMK7a5woeMTuMogDDRHOYivPRFEI/sd2B1na34Ry');
 
 INSERT INTO caderno (id, usuario_id, titulo, tipo_folha) VALUES
   (1, 1, 'Caderno de Calculo', 'pautada'),

@@ -30,7 +30,7 @@ E, opcionalmente, os dados de teste:
 C:/xampp/mysql/bin/mysql.exe -u root < database/seed.sql
 ```
 
-Usuário de teste: `teste@cadernos.local` / senha `123456`.
+Usuário de teste: `admin@admin.com` / senha `admin123`.
 
 ### 3. Servidor
 
@@ -50,10 +50,10 @@ Teste: <http://localhost:8000/api/ping>
 ## Estrutura
 
 ```
-public/     única pasta exposta na web — front controller, assets, uploads
-src/        Core (Router, Request, Response, Database, Config)
+public/     única pasta exposta na web — front controller, assets (css/js), uploads
+src/        Core (Router, Request, Response, Database, Config), funcoes.php (sessao, telas)
             Controllers, Models, Middleware
-views/      templates PHP
+views/      telas em PHP (login, cadastro, cadernos, editor) + partials/
 config/     config.example.php (versionado) e config.php (local, ignorado)
 database/   schema.sql, seed.sql
 docs/       api.md — o contrato entre backend e editor

@@ -1,7 +1,7 @@
 # Contrato da API — Cadernos Online
 
-> Este documento é o acordo entre a frente de **backend** (Pessoa A) e a de
-> **editor** (Pessoa B). Qualquer mudança aqui precisa ser combinada pelos dois.
+> Descreve as rotas da API, o que cada uma recebe e o que devolve. O JavaScript
+> das telas e o PHP do backend seguem o que está aqui.
 
 ## Regras gerais
 
@@ -35,12 +35,12 @@ enviar as requisições com `credentials: 'same-origin'` no `fetch`.
 ### `POST /api/login`
 
 ```json
-{ "email": "teste@cadernos.local", "senha": "123456" }
+{ "email": "admin@admin.com", "senha": "admin123" }
 ```
 
 **200**
 ```json
-{ "ok": true, "usuario": { "id": 1, "nome": "Usuario de Teste" } }
+{ "ok": true, "usuario": { "id": 1, "nome": "Administrador" } }
 ```
 **401** — e-mail ou senha incorretos.
 
@@ -64,7 +64,7 @@ direto na lista de cadernos sem precisar logar em seguida.
 
 | Erro | Quando |
 |---|---|
-| **400** | falta campo, e-mail malformado, ou senha com menos de 6 caracteres |
+| **400** | falta campo, e-mail malformado, ou senha com menos de 4 caracteres |
 | **409** | e-mail já cadastrado (a coluna `email` é `UNIQUE`) |
 
 A senha vai para o banco com `password_hash()`. A resposta nunca devolve
@@ -100,6 +100,21 @@ Lista os cadernos **do usuário logado**.
 **200** `{ "ok": true }` — apaga páginas e elementos em cascata.
 
 ---
+
+### `GET /api/cadernos/{id}/paginas`
+
+Lista as páginas do caderno, na ordem. O editor usa isso para saber quais
+`id`s pedir em `GET /api/paginas/{id}`.
+
+```json
+[ { "id": 1, "ordem": 1 }, { "id": 2, "ordem": 2 } ]
+```
+
+### `POST /api/cadernos/{id}/paginas`
+
+Sem corpo. Cria uma página em branco no fim do caderno.
+
+**201** → `{ "pagina": { "id": 3, "ordem": 3 } }`
 
 ## Páginas
 
@@ -207,11 +222,22 @@ daquela página (apaga os antigos, insere os novos, dentro de uma transação).
 
 ---
 
-## Rotas já implementadas (marco 1)
+## Rotas já implementadas
 
 | Rota | Estado |
 |---|---|
-| `GET /api/ping` | ✅ real |
-| `GET /api/paginas/{id}` | 🟡 **mock** — devolve o JSON fixo acima para `id=1`, 404 para o resto |
-| `PUT /api/paginas/{id}` | 🟡 **mock** — valida o corpo e devolve a contagem |
-| resto | ⬜ a fazer |
+| `GET /api/ping` | ✅ |
+| `POST /api/cadastro`, `/api/login`, `/api/logout` | ✅ |
+| `GET/POST /api/cadernos`, `DELETE /api/cadernos/{id}` | ✅ |
+| `GET/POST /api/cadernos/{id}/paginas` | ✅ |
+| `GET/PUT /api/paginas/{id}` | ✅ |
+| `POST /api/upload` | ⬜ a fazer |
+
+## Telas (HTML)
+
+| Rota | Tela |
+|---|---|
+| `/` | redireciona para `/login` ou `/cadernos` |
+| `/login`, `/cadastro` | formulários |
+| `/cadernos` | lista de cadernos |
+| `/cadernos/{id}` | editor (Konva) |
