@@ -26,6 +26,7 @@ if (PHP_SAPI === 'cli-server') {
 define('BASE_PATH', dirname(__DIR__));
 
 require BASE_PATH . '/src/autoload.php';
+require BASE_PATH . '/src/funcoes.php';
 
 use App\Core\Config;
 use App\Core\Request;
@@ -34,6 +35,9 @@ use App\Core\Router;
 
 try {
     Config::carregar(BASE_PATH . '/config/config.php');
+
+    // Sessao do PHP: e aqui que fica guardado quem esta logado.
+    session_start();
 
     $router = new Router();
     require BASE_PATH . '/routes.php';
