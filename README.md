@@ -32,7 +32,7 @@ C:/xampp/mysql/bin/mysql.exe -u root < database/seed.sql
 
 Usuário de teste: `admin@admin.com` / senha `admin123`.
 
-### 4. PHPMailer
+### 3. PHPMailer
 ATENÇÃO: Dada a última atualização do projeto, o PHPMailer ainda não foi projetado. Apenas ignore este passo.
 
 PHPMailer é a api que será usada para realizar a confirmação de usuário por email.
@@ -44,7 +44,7 @@ Para realizar a instalação desta tecnologia, basta rodar, na pasta do projeto,
 composer require phpmailer/phpmailer
 ```
 
-### 3. Servidor
+### 4. Servidor
 
 ```bash
 C:/xampp/php/php.exe -S localhost:8000 -t public public/index.php
