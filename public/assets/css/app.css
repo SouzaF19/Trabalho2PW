@@ -157,7 +157,7 @@ button { cursor: pointer; }
    Cabecalho das telas logadas
    ------------------------------------------------------------------------- */
 
-.tela-cadernos { background: #fff; }
+.tela-cadernos { background: #ffffff; }
 
 .topo {
     display: flex;
