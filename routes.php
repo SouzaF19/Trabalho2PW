@@ -15,6 +15,7 @@ use App\Controllers\AuthController;
 use App\Controllers\CadernoController;
 use App\Controllers\PaginaController;
 use App\Controllers\TelaController;
+use App\Controllers\UploadController;
 use App\Core\Response;
 
 // --- Telas (HTML) --------------------------------------------------------
@@ -45,5 +46,5 @@ $router->post('/api/cadernos/{id}/paginas',    [CadernoController::class, 'criar
 $router->get('/api/paginas/{id}', [PaginaController::class, 'mostrar']);
 $router->put('/api/paginas/{id}', [PaginaController::class, 'salvar']);
 
-// --- A implementar -------------------------------------------------------
-// $router->post('/api/upload', [UploadController::class, 'receber']);
+// --- Upload --------------------------------------------------------------
+$router->post('/api/upload', [UploadController::class, 'receber']);

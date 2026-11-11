@@ -18,12 +18,15 @@ require __DIR__ . '/partials/cabecalho.php';
                 Texto
             </button>
 
-            <button type="button" class="ferramenta" data-ferramenta="imagem" disabled title="Em breve">
+            <button type="button" class="ferramenta" data-ferramenta="imagem" title="Escolher uma imagem do computador">
                 <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor">
                     <path d="M3 4h18v16H3zM5 6v9l4-4 4 4 3-3 3 3V6zm11 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>
                 </svg>
                 Anexar imagem
             </button>
+
+            <!-- Fica escondido: o clique no botao acima e que abre a janela de arquivos -->
+            <input type="file" id="arquivo-imagem" accept="image/png,image/jpeg,image/webp" hidden>
 
             <button type="button" class="ferramenta ativo" data-ferramenta="caneta" title="Desenhar">
                 <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -83,7 +86,8 @@ require __DIR__ . '/partials/cabecalho.php';
     </section>
 </main>
 
-<script src="https://unpkg.com/konva@9/konva.min.js"></script>
+<!-- Konva 9.3.22, servido pelo proprio projeto (nao depende de CDN) -->
+<script src="<?= urlBase() ?>/assets/js/konva.min.js"></script>
 <?php
 $scripts = ['editor.js'];
 require __DIR__ . '/partials/rodape.php';

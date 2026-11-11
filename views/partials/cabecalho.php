@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= escapar($titulo) ?> · AnotaAqui</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <!-- Fontes e estilo saem do proprio servidor: a aplicacao abre sem internet -->
+    <link rel="stylesheet" href="<?= urlBase() ?>/assets/css/fontes.css">
     <link rel="stylesheet" href="<?= urlBase() ?>/assets/css/app.css">
 
     <!-- o JS usa isso para montar as URLs da API -->

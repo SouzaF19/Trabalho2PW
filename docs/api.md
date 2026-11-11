@@ -216,9 +216,16 @@ daquela página (apaga os antigos, insere os novos, dentro de uma transação).
 - Tipos aceitos: `image/png`, `image/jpeg`, `image/webp`
 - Tamanho máximo: 2 MB
 - O nome do arquivo é gerado pelo servidor (nunca o nome enviado pelo cliente)
+- O tipo é conferido pelo **conteúdo** do arquivo (`finfo`), não pelo que o
+  navegador informa — um `.php` renomeado para `.png` é recusado
+
+Os limites ficam em `config/config.php`, na chave `upload`.
 
 **200** → `{ "url": "/uploads/abc123.png" }`
 **400** → arquivo ausente, grande demais ou de tipo não permitido.
+**401** → não está logado.
+
+A URL devolvida é o que vai em `dados.url` do elemento do tipo `imagem`.
 
 ---
 
@@ -231,7 +238,7 @@ daquela página (apaga os antigos, insere os novos, dentro de uma transação).
 | `GET/POST /api/cadernos`, `DELETE /api/cadernos/{id}` | ✅ |
 | `GET/POST /api/cadernos/{id}/paginas` | ✅ |
 | `GET/PUT /api/paginas/{id}` | ✅ |
-| `POST /api/upload` | ⬜ a fazer |
+| `POST /api/upload` | ✅ |
 
 ## Telas (HTML)
 
