@@ -17,7 +17,14 @@ CREATE TABLE usuario (
   nome       VARCHAR(100) NOT NULL,
   email      VARCHAR(150) UNIQUE NOT NULL,
   senha_hash VARCHAR(255) NOT NULL,
-  criado_em  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  criado_em  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  -- confirmacao de e-mail
+  email_confirmado  TINYINT(1)  NOT NULL DEFAULT 0,
+  token_confirmacao VARCHAR(64) NULL,
+  token_expira_em   DATETIME    NULL,
+  -- a busca pelo token acontece em toda confirmacao
+  INDEX idx_usuario_token (token_confirmacao)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE caderno (

@@ -15,3 +15,12 @@
         </button>
     </div>
 </header>
+
+<?php if (!usuarioConfirmado()): ?>
+    <!-- Enquanto o usuario nao abre o link do e-mail, o aviso acompanha as telas -->
+    <div class="aviso-confirmacao" id="aviso-confirmacao">
+        <span>Confirme seu e-mail para garantir o acesso à sua conta.</span>
+        <button type="button" id="btn-reenviar">Reenviar e-mail</button>
+        <span class="aviso-estado" id="aviso-estado"></span>
+    </div>
+<?php endif; ?>

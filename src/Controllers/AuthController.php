@@ -36,12 +36,19 @@ final class AuthController
             return;
         }
 
-        $id = Usuario::criar($nome, $email, $senha);
+        $token = Usuario::gerarToken();
+        $id    = Usuario::criar($nome, $email, $senha, $token);
 
-        // ja deixa logado
-        entrar($id, $nome);
+        $link = ConfirmacaoController::enviarLink($nome, $email, $token);
 
-        Response::json(['ok' => true, 'usuario' => ['id' => $id, 'nome' => $nome]], 201);
+        // Ja deixa logado. O e-mail ainda nao esta confirmado: as telas
+        // mostram um aviso ate o usuario abrir o link.
+        entrar($id, $nome, false);
+
+        Response::json([
+            'ok'      => true,
+            'usuario' => ['id' => $id, 'nome' => $nome],
+        ] + ConfirmacaoController::linkParaDemonstracao($link), 201);
     }
 
     /** POST /api/login */
@@ -56,11 +63,18 @@ final class AuthController
             return;
         }
 
-        entrar((int) $usuario['id'], $usuario['nome']);
+        // Quem ainda nao confirmou o e-mail entra assim mesmo, mas ve um
+        // aviso nas telas. Bloquear o login deixaria a pessoa de fora caso
+        // o e-mail demorasse ou caisse no spam.
+        entrar((int) $usuario['id'], $usuario['nome'], (int) $usuario['email_confirmado'] === 1);
 
         Response::json([
             'ok'      => true,
-            'usuario' => ['id' => (int) $usuario['id'], 'nome' => $usuario['nome']],
+            'usuario' => [
+                'id'               => (int) $usuario['id'],
+                'nome'             => $usuario['nome'],
+                'email_confirmado' => (int) $usuario['email_confirmado'] === 1,
+            ],
         ]);
     }
 

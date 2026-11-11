@@ -53,6 +53,10 @@ Sem corpo. **200** `{ "ok": true }`
 Tela `/cadastro`. Cria o usuário e **já deixa a sessão aberta**, para ele cair
 direto na lista de cadernos sem precisar logar em seguida.
 
+O e-mail nasce **não confirmado**: o sistema gera um token e envia um link
+(ver seção "Confirmação de e-mail"). Isso não bloqueia o login — as telas só
+mostram um aviso até o usuário abrir o link.
+
 ```json
 { "nome": "Antonio", "email": "antonio@exemplo.com", "senha": "123456" }
 ```
@@ -69,6 +73,51 @@ direto na lista de cadernos sem precisar logar em seguida.
 
 A senha vai para o banco com `password_hash()`. A resposta nunca devolve
 `senha_hash`.
+
+---
+
+## Confirmação de e-mail
+
+No cadastro o sistema gera um token aleatório de 64 caracteres, guarda em
+`usuario.token_confirmacao` com validade de 24 horas e envia um link por e-mail.
+
+O envio é controlado por `config/config.php`, chave `email`:
+
+| `modo` | O que faz |
+|---|---|
+| `log` | não envia nada; grava a mensagem em `storage/emails.log`. É o padrão — o sistema funciona de ponta a ponta sem servidor de e-mail |
+| `smtp` | envia de verdade (depende do PHPMailer, ainda não instalado) |
+
+**Não confirmar não impede o login.** O usuário entra normalmente e vê um
+aviso nas telas, com botão para reenviar. A decisão evita que alguém fique
+de fora da própria conta porque o e-mail demorou ou caiu no spam.
+
+### `GET /confirmar/{token}`
+
+Tela HTML (não é JSON). Marca o e-mail como confirmado e limpa o token, que
+passa a não valer mais. Mostra a tela de sucesso ou o motivo da falha:
+
+| Situação | O que aparece |
+|---|---|
+| Token válido | "Email verificado com sucesso!" |
+| Token inexistente ou já usado | "Este link não existe ou já foi usado." |
+| Token fora da validade | "Este link passou da validade..." |
+
+### `POST /api/reenviar-confirmacao`
+
+Sem corpo. Gera um token novo para o usuário logado e envia de novo.
+
+**200** `{ "ok": true }`
+
+| Erro | Quando |
+|---|---|
+| **400** | o e-mail já está confirmado |
+| **401** | não está logado |
+
+> Quando `modo` é `log` **e** `debug` é `true`, as respostas de
+> `POST /api/cadastro` e `POST /api/reenviar-confirmacao` trazem também
+> `link_confirmacao`, para dar para confirmar a conta na hora sem abrir o
+> arquivo de log. Com `debug` em `false` o campo nunca aparece.
 
 ---
 
@@ -239,6 +288,8 @@ A URL devolvida é o que vai em `dados.url` do elemento do tipo `imagem`.
 | `GET/POST /api/cadernos/{id}/paginas` | ✅ |
 | `GET/PUT /api/paginas/{id}` | ✅ |
 | `POST /api/upload` | ✅ |
+| `GET /confirmar/{token}`, `POST /api/reenviar-confirmacao` | ✅ |
+| envio real por SMTP (PHPMailer) | ⬜ a fazer — hoje o modo `log` cobre o fluxo |
 
 ## Telas (HTML)
 
@@ -248,3 +299,4 @@ A URL devolvida é o que vai em `dados.url` do elemento do tipo `imagem`.
 | `/login`, `/cadastro` | formulários |
 | `/cadernos` | lista de cadernos |
 | `/cadernos/{id}` | editor (Konva) |
+| `/confirmar/{token}` | confirmação de e-mail |

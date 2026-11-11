@@ -49,16 +49,29 @@ C:/xampp/mysql/bin/mysql.exe -u root < database/seed.sql
 
 Usuário de teste: `admin@admin.com` / senha `admin123`.
 
-### 3. PHPMailer
-ATENÇÃO: Dada a última atualização do projeto, o PHPMailer ainda não foi projetado. Apenas ignore este passo.
+### 3. E-mail de confirmação
 
-PHPMailer é a api que será usada para realizar a confirmação de usuário por email.
-De código aberto e amplamente utilizada, é a tecnologia escolhida para complementar este trabalho.
+O cadastro gera um link de confirmação. **Não é preciso configurar nada para
+isso funcionar:** o modo padrão é `log`, que em vez de enviar grava a mensagem
+em `storage/emails.log` — com o link dentro.
 
-Para realizar a instalação desta tecnologia, basta rodar, na pasta do projeto, o seguinte comando:
+Com `debug` ligado, o link também aparece direto na tela, no aviso
+"Confirme seu e-mail" → botão **Reenviar e-mail**. Dá para confirmar a conta
+na hora, sem abrir arquivo nenhum.
+
+Não confirmar **não impede o login**: o usuário entra e vê um aviso até
+abrir o link.
+
+> Para enviar e-mail de verdade falta instalar o PHPMailer e preencher os
+> dados de SMTP em `config/config.php`. Enquanto isso não acontece, deixe
+> `'modo' => 'log'`.
+
+#### Já tem o banco criado?
+
+Rode a atualização para ganhar as colunas de confirmação sem perder dados:
 
 ```bash
-composer require phpmailer/phpmailer
+C:/xampp/mysql/bin/mysql.exe -u root < database/atualizacoes/001-confirmacao-email.sql
 ```
 
 ### 4. Servidor
@@ -84,7 +97,8 @@ src/        Core (Router, Request, Response, Database, Config), funcoes.php (ses
             Controllers, Models, Middleware
 views/      telas em PHP (login, cadastro, cadernos, editor) + partials/
 config/     config.example.php (versionado) e config.php (local, ignorado)
-database/   schema.sql, seed.sql
+database/   schema.sql, seed.sql, atualizacoes/ (mudancas para quem ja tem banco)
+storage/    emails.log, gerado pelo modo "log" de e-mail (ignorado pelo Git)
 docs/       api.md — o contrato entre backend e editor
 routes.php  mapa de rotas
 ```

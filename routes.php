@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 use App\Controllers\AuthController;
 use App\Controllers\CadernoController;
+use App\Controllers\ConfirmacaoController;
 use App\Controllers\PaginaController;
 use App\Controllers\TelaController;
 use App\Controllers\UploadController;
@@ -24,6 +25,7 @@ $router->get('/login',         [TelaController::class, 'login']);
 $router->get('/cadastro',      [TelaController::class, 'cadastro']);
 $router->get('/cadernos',      [TelaController::class, 'cadernos']);
 $router->get('/cadernos/{id}', [TelaController::class, 'editor']);
+$router->get('/confirmar/{token}', [ConfirmacaoController::class, 'confirmar']);
 
 // --- Diagnostico ---------------------------------------------------------
 $router->get('/api/ping', function (): void {
@@ -34,6 +36,7 @@ $router->get('/api/ping', function (): void {
 $router->post('/api/cadastro', [AuthController::class, 'cadastrar']);
 $router->post('/api/login',    [AuthController::class, 'entrar']);
 $router->post('/api/logout',   [AuthController::class, 'sair']);
+$router->post('/api/reenviar-confirmacao', [ConfirmacaoController::class, 'reenviar']);
 
 // --- Cadernos ------------------------------------------------------------
 $router->get('/api/cadernos',                  [CadernoController::class, 'listar']);
