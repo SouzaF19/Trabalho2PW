@@ -2,9 +2,11 @@
 -- Usuario: admin@admin.com  /  senha: admin123
 USE cadernos;
 
-INSERT INTO usuario (id, nome, email, senha_hash) VALUES
+-- O usuario de teste ja nasce com o e-mail confirmado, para dar
+-- para entrar sem depender de abrir o link de confirmacao.
+INSERT INTO usuario (id, nome, email, senha_hash, email_confirmado) VALUES
   (1, 'Administrador', 'admin@admin.com',
-   '$2y$10$FhCLQTY3hIFEvIMK7a5woeMTuMogDDRHOYivPRFEI/sd2B1na34Ry');
+   '$2y$10$FhCLQTY3hIFEvIMK7a5woeMTuMogDDRHOYivPRFEI/sd2B1na34Ry', 1);
 
 INSERT INTO caderno (id, usuario_id, titulo, tipo_folha) VALUES
   (1, 1, 'Caderno de Calculo', 'pautada'),

@@ -12,3 +12,6 @@ Thumbs.db
 .vscode/
 .idea/
 
+
+# Mensagens gravadas pelo modo "log" do e-mail
+/storage/*.log

@@ -9,10 +9,17 @@ declare(strict_types=1);
 // --- Sessao / login -------------------------------------------------------
 
 /** Guarda o usuario na sessao depois do login ou cadastro. */
-function entrar(int $usuarioId, string $nome): void
+function entrar(int $usuarioId, string $nome, bool $emailConfirmado = true): void
 {
-    $_SESSION['usuario_id']   = $usuarioId;
-    $_SESSION['usuario_nome'] = $nome;
+    $_SESSION['usuario_id']         = $usuarioId;
+    $_SESSION['usuario_nome']       = $nome;
+    $_SESSION['usuario_confirmado'] = $emailConfirmado;
+}
+
+/** false enquanto o usuario nao abriu o link de confirmacao do e-mail. */
+function usuarioConfirmado(): bool
+{
+    return ($_SESSION['usuario_confirmado'] ?? true) === true;
 }
 
 function sair(): void
