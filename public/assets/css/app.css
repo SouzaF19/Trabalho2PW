@@ -447,12 +447,32 @@ button { cursor: pointer; }
     width: 794px;    /* A4 a 96 dpi */
     height: 1123px;
     flex: none;
+    position: relative;   /* o campo de escrever texto se posiciona por aqui */
     box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
     touch-action: none;   /* deixa o Pointer Events cuidar do toque/caneta */
 }
 .folha.ferramenta-texto  { cursor: text; }
 .folha.ferramenta-mover  { cursor: default; }
 .folha.ferramenta-caneta, .folha.ferramenta-lapis, .folha.ferramenta-borracha { cursor: crosshair; }
+
+/* Campo que aparece sobre a folha quando se escreve um texto.
+   As medidas acompanham as do Konva.Text (mesma fonte, mesmo tamanho,
+   line-height 1 e sem padding) para o texto nao "pular" ao confirmar. */
+.editor-texto {
+    position: absolute;
+    z-index: 2;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 1px dashed var(--roxo-escuro);
+    background: rgba(255, 255, 255, .8);
+    font-family: var(--serifa);
+    line-height: 1;
+    white-space: pre;
+    overflow: hidden;
+    resize: none;
+    min-width: 140px;
+}
 
 /* -------------------------------------------------------------------------
    Telas pequenas

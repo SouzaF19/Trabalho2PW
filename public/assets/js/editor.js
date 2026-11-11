@@ -126,24 +126,103 @@ function criarTexto(x, y, conteudo, tamanho, cor) {
         y: y,
         text: conteudo,
         fontSize: tamanho,
-        fontFamily: 'Lora, Georgia, serif',
+        fontFamily: FONTE_TEXTO,
         fill: cor,
         draggable: ferramenta === 'mover',
     });
 
-    // duplo clique edita o texto; apagar tudo remove
-    texto.on('dblclick dbltap', () => {
-        const novo = prompt('Editar texto:', texto.text());
-        if (novo === null) return;
-
-        if (novo.trim() === '') texto.destroy();
-        else texto.text(novo);
-
-        marcarAlterado();
-    });
+    // duplo clique reabre o campo de escrever em cima do texto
+    texto.on('dblclick dbltap', () => abrirCampoDeTexto(texto.x(), texto.y(), texto));
     texto.on('dragend', marcarAlterado);
 
     return texto;
+}
+
+// ---- Escrever texto na folha ---------------------------------------------
+//
+// Em vez de um prompt() do navegador, abrimos um <textarea> em cima da folha,
+// no lugar exato do clique e com a mesma fonte do Konva.Text. Para o usuario
+// parece que ele esta escrevendo direto no papel.
+
+const FONTE_TEXTO = 'Lora, Georgia, serif';
+const TAMANHO_TEXTO = 18;
+
+let campoAberto = null;
+
+// Sem `no`, cria um texto novo em (x, y). Com `no`, edita aquele texto.
+function abrirCampoDeTexto(x, y, no) {
+    if (campoAberto) return;
+
+    const tamanho = no ? no.fontSize() : TAMANHO_TEXTO;
+    const cor     = no ? no.fill() : inputCor.value;
+
+    if (no) no.hide();   // o original some enquanto o campo esta aberto
+
+    const campo = document.createElement('textarea');
+    campo.className = 'editor-texto';
+    campo.wrap = 'off';   // nao quebra linha sozinho, igual ao Konva.Text
+    campo.value = no ? no.text() : '';
+    campo.style.left = x + 'px';
+    campo.style.top = y + 'px';
+    campo.style.fontSize = tamanho + 'px';
+    campo.style.color = cor;
+
+    folha.appendChild(campo);
+    campoAberto = campo;
+
+    ajustarTamanhoDoCampo(campo);
+    campo.addEventListener('input', () => ajustarTamanhoDoCampo(campo));
+
+    campo.addEventListener('keydown', (evento) => {
+        // Enter confirma, Shift+Enter pula linha, Esc desiste
+        if (evento.key === 'Enter' && !evento.shiftKey) {
+            evento.preventDefault();
+            fechar(true);
+        } else if (evento.key === 'Escape') {
+            fechar(false);
+        }
+    });
+
+    // clicou fora: confirma o que foi escrito
+    campo.addEventListener('blur', () => fechar(true));
+
+    campo.focus();
+
+    function fechar(confirmar) {
+        if (campoAberto !== campo) return;   // ja foi fechado
+        campoAberto = null;
+
+        const conteudo = campo.value.trim();
+        campo.remove();
+
+        if (!confirmar) {
+            if (no) no.show();
+            return;
+        }
+
+        if (no) {
+            if (conteudo === '') {
+                no.destroy();           // apagou tudo: o texto sai da folha
+            } else {
+                if (conteudo === no.text()) { no.show(); return; }   // nada mudou
+                no.text(conteudo);
+                no.show();
+            }
+        } else {
+            if (conteudo === '') return;   // desistiu de escrever
+            camada.add(criarTexto(x, y, conteudo, tamanho, cor));
+        }
+
+        marcarAlterado();
+    }
+}
+
+// O campo cresce conforme o usuario escreve, em vez de ganhar barra de rolagem
+function ajustarTamanhoDoCampo(campo) {
+    campo.style.height = 'auto';
+    campo.style.height = campo.scrollHeight + 'px';
+    campo.style.width = 'auto';
+    campo.style.width = Math.min(campo.scrollWidth + 4, LARGURA_FOLHA - campo.offsetLeft) + 'px';
 }
 
 // ---- Desenhar (Pointer Events: mouse, toque e caneta) --------------------
@@ -164,11 +243,7 @@ stage.on('pointerdown', (evento) => {
     if (ferramenta === 'texto') {
         if (evento.target instanceof Konva.Text) return;   // clicou num texto: o dblclick edita
 
-        const conteudo = prompt('Texto:');
-        if (!conteudo || conteudo.trim() === '') return;
-
-        camada.add(criarTexto(pos.x, pos.y, conteudo, 18, inputCor.value));
-        marcarAlterado();
+        abrirCampoDeTexto(pos.x, pos.y, null);
         return;
     }
 
