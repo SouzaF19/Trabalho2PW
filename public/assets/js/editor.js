@@ -23,6 +23,7 @@ const btnAnterior  = document.getElementById('btn-pagina-anterior');
 const btnProxima   = document.getElementById('btn-pagina-proxima');
 const btnNova      = document.getElementById('btn-pagina-nova');
 const rotuloPagina = document.getElementById('rotulo-pagina');
+const inputArquivo = document.getElementById('arquivo-imagem');
 
 // estado do editor
 let ferramenta   = 'caneta';
@@ -41,6 +42,30 @@ const stage = new Konva.Stage({
 const camada = new Konva.Layer();
 stage.add(camada);
 
+// Alcas de redimensionar da imagem selecionada. E filho da camada, mas nao e
+// um desenho do usuario: nao entra no JSON e nao conta no "Desfazer".
+const transformador = new Konva.Transformer({
+    rotateEnabled: false,
+    keepRatio: true,
+    enabledAnchors: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+    // nao deixa encolher a imagem ate sumir
+    boundBoxFunc: (antes, depois) => (depois.width < 30 || depois.height < 30 ? antes : depois),
+});
+camada.add(transformador);
+
+// Esvazia a folha sem perder o transformador
+function limparCamada() {
+    transformador.nodes([]);
+    transformador.remove();        // tira da camada, mas nao destroi
+    camada.destroyChildren();
+    camada.add(transformador);
+}
+
+// Os desenhos do usuario, sem o transformador
+function elementosDaCamada() {
+    return camada.getChildren((no) => no !== transformador);
+}
+
 // ---- Ferramentas ---------------------------------------------------------
 
 function escolherFerramenta(nome) {
@@ -50,11 +75,24 @@ function escolherFerramenta(nome) {
     botoes.forEach((b) => b.classList.toggle('ativo', b.dataset.ferramenta === nome));
     folha.className = 'folha folha-' + document.getElementById('editor').dataset.tipoFolha + ' ferramenta-' + nome;
 
-    // textos so podem ser arrastados no modo "mover"
+    // textos e imagens so podem ser arrastados no modo "mover"
     camada.find('.texto').forEach((t) => t.draggable(nome === 'mover'));
+    camada.find('.imagem').forEach((i) => i.draggable(nome === 'mover'));
+
+    // saiu do modo "mover": esconde as alcas de redimensionar
+    if (nome !== 'mover') transformador.nodes([]);
 }
 
-botoes.forEach((b) => b.addEventListener('click', () => escolherFerramenta(b.dataset.ferramenta)));
+botoes.forEach((b) => b.addEventListener('click', () => {
+    // "Anexar imagem" nao e um modo de desenho: abre a janela de arquivos
+    // e deixa a ferramenta atual como esta.
+    if (b.dataset.ferramenta === 'imagem') {
+        inputArquivo.click();
+        return;
+    }
+
+    escolherFerramenta(b.dataset.ferramenta);
+}));
 escolherFerramenta('caneta');
 
 // Cria a linha de um traco (usado ao desenhar e ao carregar da API)
@@ -113,7 +151,15 @@ function criarTexto(x, y, conteudo, tamanho, cor) {
 stage.on('pointerdown', (evento) => {
     const pos = stage.getPointerPosition();
 
-    if (ferramenta === 'mover') return;   // o Konva cuida do arrastar
+    if (ferramenta === 'mover') {
+        // o Konva cuida do arrastar; aqui so decidimos quem fica selecionado
+        const alvo = evento.target;
+
+        if (alvo.getParent() === transformador) return;   // clicou nas proprias alcas
+
+        transformador.nodes(alvo.hasName('imagem') ? [alvo] : []);
+        return;
+    }
 
     if (ferramenta === 'texto') {
         if (evento.target instanceof Konva.Text) return;   // clicou num texto: o dblclick edita
@@ -160,17 +206,18 @@ folha.addEventListener('pointerleave', terminarTraco);
 // ---- Desfazer / limpar ---------------------------------------------------
 
 btnDesfazer.addEventListener('click', () => {
-    const filhos = camada.getChildren();
+    const filhos = elementosDaCamada();
     if (filhos.length === 0) return;
 
-    filhos[filhos.length - 1].destroy();   // remove o ultimo elemento
+    transformador.nodes([]);                // o selecionado pode ser o que vai sumir
+    filhos[filhos.length - 1].destroy();    // remove o ultimo elemento
     marcarAlterado();
 });
 
 btnLimpar.addEventListener('click', () => {
     if (!confirm('Apagar tudo desta página?')) return;
 
-    camada.destroyChildren();
+    limparCamada();
     marcarAlterado();
 });
 
@@ -180,7 +227,7 @@ btnLimpar.addEventListener('click', () => {
 function montarJson() {
     const elementos = [];
 
-    camada.getChildren().forEach((no, i) => {
+    elementosDaCamada().forEach((no, i) => {
         if (no.hasName('traco')) {
             elementos.push({
                 tipo: 'traco',
@@ -205,8 +252,10 @@ function montarJson() {
                 tipo: 'imagem',
                 x: no.x(),
                 y: no.y(),
-                largura: no.width(),
-                altura: no.height(),
+                // o scale normalmente e 1 (ver criarImagem), mas multiplicamos
+                // para o tamanho sair certo mesmo se sobrar escala
+                largura: no.width() * no.scaleX(),
+                altura: no.height() * no.scaleY(),
                 z_index: i,
                 dados: { url: no.getAttr('url') },
             });
@@ -223,12 +272,82 @@ function desenharElemento(e) {
     } else if (e.tipo === 'texto') {
         camada.add(criarTexto(e.x, e.y, e.dados.conteudo, e.dados.tamanho, e.dados.cor));
     } else if (e.tipo === 'imagem') {
-        Konva.Image.fromURL(BASE + e.dados.url, (img) => {
-            img.setAttrs({ name: 'imagem', x: e.x, y: e.y, width: e.largura, height: e.altura, url: e.dados.url });
-            camada.add(img);
-        });
+        criarImagem(e.dados.url, e.x, e.y, e.largura, e.altura);
     }
 }
+
+// ---- Imagens -------------------------------------------------------------
+
+// Coloca a imagem na folha (usado ao anexar e ao carregar da API).
+// Sem largura/altura, a imagem entra reduzida para caber na folha.
+function criarImagem(url, x, y, largura, altura) {
+    Konva.Image.fromURL(
+        BASE + url,
+        (img) => {
+            img.setAttrs({
+                name: 'imagem',
+                x: x,
+                y: y,
+                url: url,
+                draggable: ferramenta === 'mover',
+            });
+
+            if (largura && altura) {
+                img.size({ width: largura, height: altura });
+            } else {
+                const escala = Math.min(1, (LARGURA_FOLHA * 0.5) / img.width());
+                img.size({ width: img.width() * escala, height: img.height() * escala });
+            }
+
+            // O transformador redimensiona mexendo no scale. Aqui passamos esse
+            // scale para largura/altura e voltamos o scale para 1, senao a imagem
+            // seria salva com o tamanho original.
+            img.on('transformend', () => {
+                img.size({ width: img.width() * img.scaleX(), height: img.height() * img.scaleY() });
+                img.scale({ x: 1, y: 1 });
+                marcarAlterado();
+            });
+            img.on('dragend', marcarAlterado);
+
+            camada.add(img);
+            transformador.moveToTop();   // as alcas ficam sempre por cima
+        },
+        () => {
+            status.textContent = 'Não foi possível carregar a imagem ' + url;
+            status.className = 'status-salvar erro';
+        }
+    );
+}
+
+// Botao "Anexar imagem" -> janela de arquivos -> POST /api/upload
+inputArquivo.addEventListener('change', async () => {
+    const arquivo = inputArquivo.files[0];
+    if (!arquivo) return;
+
+    status.textContent = 'Enviando imagem...';
+    status.className = 'status-salvar';
+
+    // Aqui nao da para usar chamarApi(): ele manda JSON, e o upload precisa de
+    // multipart/form-data. Com FormData o proprio fetch monta o cabecalho.
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+
+    try {
+        const resposta = await fetch(BASE + '/api/upload', { method: 'POST', body: dados });
+        const json = await resposta.json();
+
+        if (!resposta.ok) throw new Error(json.erro || 'Erro ' + resposta.status);
+
+        criarImagem(json.url, 60, 60);
+        escolherFerramenta('mover');   // ja deixa pronto para posicionar
+        marcarAlterado();
+    } catch (erro) {
+        status.textContent = 'Erro ao enviar: ' + erro.message;
+        status.className = 'status-salvar erro';
+    }
+
+    inputArquivo.value = '';   // permite escolher o mesmo arquivo de novo
+});
 
 // ---- Salvar --------------------------------------------------------------
 
@@ -263,7 +382,7 @@ async function abrirPagina(indice) {
 
     const pagina = await chamarApi('GET', '/api/paginas/' + paginas[indice].id);
 
-    camada.destroyChildren();
+    limparCamada();
     pagina.elementos.forEach(desenharElemento);
 
     status.textContent = '';

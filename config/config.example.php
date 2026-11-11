@@ -13,8 +13,8 @@ return [
     ],
 
     // true = mostra a mensagem real do erro nas respostas da API.
-    // Deixe false quando for apresentar/entregar.
-    'debug' => true,
+    // Deixe false para apresentar/entregar; coloque true so enquanto programa.
+    'debug' => false,
 
     'upload' => [
         'tamanhoMaximo' => 2 * 1024 * 1024,   // 2 MB

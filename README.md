@@ -6,6 +6,20 @@ Trabalho II — Programação Web.
 - **Backend:** PHP 8 puro (front controller + roteador próprio), MySQL/MariaDB via PDO
 - **Frontend:** HTML/CSS/JS puro + [Konva.js](https://konvajs.org/) + Pointer Events
 
+O Konva e as fontes são servidos pelo próprio projeto (`public/assets/`), então
+a aplicação abre sem depender de internet.
+
+## O que o editor faz
+
+| Ferramenta | O que faz |
+|---|---|
+| Texto | clique na folha para escrever; duplo clique edita |
+| Anexar imagem | envia a imagem e coloca na folha (arraste e redimensione no modo Mover) |
+| Caneta, Lápis, Borracha | desenho à mão livre, com cor e espessura |
+| Mover | arrasta textos e imagens; nas imagens aparecem as alças de redimensionar |
+
+Desfazer, Limpar página, Salvar e navegação entre páginas ficam na lateral.
+
 ## Como rodar
 
 ### 1. Configuração
@@ -15,6 +29,9 @@ cp config/config.example.php config/config.php
 ```
 
 Ajuste usuário/senha do banco se necessário. Esse arquivo **não** vai para o Git.
+
+O `debug` vem como `false` (é assim que se entrega). Coloque `true` enquanto
+estiver programando para ver a mensagem real dos erros da API.
 
 ### 2. Banco
 
@@ -62,7 +79,7 @@ Teste: <http://localhost:8000/api/ping>
 ## Estrutura
 
 ```
-public/     única pasta exposta na web — front controller, assets (css/js), uploads
+public/     única pasta exposta na web — front controller, assets (css/js/fontes), uploads
 src/        Core (Router, Request, Response, Database, Config), funcoes.php (sessao, telas)
             Controllers, Models, Middleware
 views/      telas em PHP (login, cadastro, cadernos, editor) + partials/
