@@ -61,6 +61,26 @@ final class PaginaController
         ]);
     }
 
+    /** DELETE /api/paginas/{id} */
+    public function excluir(Request $req, array $params): void
+    {
+        $pagina = $this->buscarPaginaDoUsuario((int) $params['id']);
+        if ($pagina === null) {
+            return;
+        }
+
+        // Um caderno sem nenhuma pagina nao faz sentido: o editor teria
+        // que criar uma em branco na hora de abrir.
+        if (Pagina::contar((int) $pagina['caderno_id']) <= 1) {
+            Response::erro('Este e a unica pagina do caderno. Exclua o caderno inteiro, se for o caso.');
+            return;
+        }
+
+        Pagina::excluir((int) $pagina['id'], (int) $pagina['caderno_id']);
+
+        Response::json(['ok' => true]);
+    }
+
     /**
      * Busca a pagina e confere se e do usuario logado.
      * Se nao for, ja responde o erro e devolve null.

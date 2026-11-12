@@ -254,6 +254,20 @@ daquela página (apaga os antigos, insere os novos, dentro de uma transação).
 > corretamente, e o volume de dados de uma página é pequeno. Se ficar lento,
 > aí sim vale otimizar.
 
+### `DELETE /api/paginas/{id}`
+
+Apaga a página e os elementos dela (cascata). As páginas seguintes são
+**renumeradas** na mesma transação, para a ordem continuar 1, 2, 3... sem
+buraco.
+
+**200** `{ "ok": true }`
+
+| Erro | Quando |
+|---|---|
+| **400** | é a única página do caderno — um caderno sem páginas não faz sentido |
+| **401** | não está logado |
+| **404** | a página não existe ou é de outro usuário |
+
 ---
 
 ## Upload
@@ -286,7 +300,7 @@ A URL devolvida é o que vai em `dados.url` do elemento do tipo `imagem`.
 | `POST /api/cadastro`, `/api/login`, `/api/logout` | ✅ |
 | `GET/POST /api/cadernos`, `DELETE /api/cadernos/{id}` | ✅ |
 | `GET/POST /api/cadernos/{id}/paginas` | ✅ |
-| `GET/PUT /api/paginas/{id}` | ✅ |
+| `GET/PUT/DELETE /api/paginas/{id}` | ✅ |
 | `POST /api/upload` | ✅ |
 | `GET /confirmar/{token}`, `POST /api/reenviar-confirmacao` | ✅ |
 | envio real por SMTP (PHPMailer) | ⬜ a fazer — hoje o modo `log` cobre o fluxo |

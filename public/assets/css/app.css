@@ -562,3 +562,11 @@ button { cursor: pointer; }
 @media (max-width: 720px) {
     .aviso-confirmacao { margin: 12px 16px 0; }
 }
+
+/* Excluir pagina fica separado dos outros botoes da barra, por ser destrutivo */
+.btn-pagina-excluir {
+    font-size: .9rem;
+    margin-left: auto;
+    background: rgba(255, 255, 255, .35);
+}
+.btn-pagina-excluir:hover:not(:disabled) { background: #f3d2d2; color: #8c1d1d; }

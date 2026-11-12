@@ -48,6 +48,7 @@ $router->post('/api/cadernos/{id}/paginas',    [CadernoController::class, 'criar
 // --- Paginas -------------------------------------------------------------
 $router->get('/api/paginas/{id}', [PaginaController::class, 'mostrar']);
 $router->put('/api/paginas/{id}', [PaginaController::class, 'salvar']);
+$router->delete('/api/paginas/{id}', [PaginaController::class, 'excluir']);
 
 // --- Upload --------------------------------------------------------------
 $router->post('/api/upload', [UploadController::class, 'receber']);

@@ -24,6 +24,8 @@ const btnProxima   = document.getElementById('btn-pagina-proxima');
 const btnNova      = document.getElementById('btn-pagina-nova');
 const rotuloPagina = document.getElementById('rotulo-pagina');
 const inputArquivo = document.getElementById('arquivo-imagem');
+const btnExcluirSel = document.getElementById('btn-excluir-selecao');
+const btnExcluirPag = document.getElementById('btn-pagina-excluir');
 
 // estado do editor
 let ferramenta   = 'caneta';
@@ -55,7 +57,7 @@ camada.add(transformador);
 
 // Esvazia a folha sem perder o transformador
 function limparCamada() {
-    transformador.nodes([]);
+    selecionar(null);
     transformador.remove();        // tira da camada, mas nao destroi
     camada.destroyChildren();
     camada.add(transformador);
@@ -64,6 +66,31 @@ function limparCamada() {
 // Os desenhos do usuario, sem o transformador
 function elementosDaCamada() {
     return camada.getChildren((no) => no !== transformador);
+}
+
+// ---- Selecao (modo "mover") ----------------------------------------------
+
+// Marca um texto ou imagem como selecionado, para dar para excluir.
+// Imagem ganha as alcas de redimensionar; texto so a moldura, porque
+// esticar texto pelo scale deformaria a fonte.
+function selecionar(no) {
+    transformador.nodes(no ? [no] : []);
+    transformador.resizeEnabled(no !== null && no.hasName('imagem'));
+
+    btnExcluirSel.disabled = no === null;
+}
+
+function elementoSelecionado() {
+    return transformador.nodes()[0] ?? null;
+}
+
+function excluirSelecao() {
+    const no = elementoSelecionado();
+    if (!no) return;
+
+    selecionar(null);
+    no.destroy();
+    marcarAlterado();
 }
 
 // ---- Ferramentas ---------------------------------------------------------
@@ -80,7 +107,7 @@ function escolherFerramenta(nome) {
     camada.find('.imagem').forEach((i) => i.draggable(nome === 'mover'));
 
     // saiu do modo "mover": esconde as alcas de redimensionar
-    if (nome !== 'mover') transformador.nodes([]);
+    if (nome !== 'mover') selecionar(null);
 }
 
 botoes.forEach((b) => b.addEventListener('click', () => {
@@ -236,7 +263,7 @@ stage.on('pointerdown', (evento) => {
 
         if (alvo.getParent() === transformador) return;   // clicou nas proprias alcas
 
-        transformador.nodes(alvo.hasName('imagem') ? [alvo] : []);
+        selecionar(alvo.hasName('imagem') || alvo.hasName('texto') ? alvo : null);
         return;
     }
 
@@ -284,7 +311,7 @@ btnDesfazer.addEventListener('click', () => {
     const filhos = elementosDaCamada();
     if (filhos.length === 0) return;
 
-    transformador.nodes([]);                // o selecionado pode ser o que vai sumir
+    selecionar(null);                      // o selecionado pode ser o que vai sumir
     filhos[filhos.length - 1].destroy();    // remove o ultimo elemento
     marcarAlterado();
 });
@@ -466,6 +493,9 @@ async function abrirPagina(indice) {
     rotuloPagina.textContent = 'Página ' + (indice + 1) + ' de ' + paginas.length;
     btnAnterior.disabled = indice === 0;
     btnProxima.disabled  = indice === paginas.length - 1;
+
+    // o caderno nao pode ficar sem nenhuma pagina
+    btnExcluirPag.disabled = paginas.length <= 1;
 }
 
 // Antes de trocar de pagina, pergunta se quer salvar
@@ -483,6 +513,40 @@ btnNova.addEventListener('click', async () => {
     const resposta = await chamarApi('POST', '/api/cadernos/' + cadernoId + '/paginas', {});
     paginas.push(resposta.pagina);
     trocarPagina(paginas.length - 1);
+});
+
+btnExcluirPag.addEventListener('click', async () => {
+    if (!confirm('Excluir a página ' + (indicePagina + 1) + '? Tudo que está nela será apagado.')) return;
+
+    try {
+        await chamarApi('DELETE', '/api/paginas/' + paginas[indicePagina].id);
+
+        // a lista vem do servidor de novo: as paginas seguintes foram renumeradas
+        paginas = await chamarApi('GET', '/api/cadernos/' + cadernoId + '/paginas');
+
+        // fica na mesma posicao; se apagou a ultima, volta uma
+        abrirPagina(Math.min(indicePagina, paginas.length - 1));
+    } catch (erro) {
+        status.textContent = erro.message;
+        status.className = 'status-salvar erro';
+    }
+});
+
+// ---- Excluir o elemento selecionado --------------------------------------
+
+btnExcluirSel.addEventListener('click', excluirSelecao);
+
+document.addEventListener('keydown', (evento) => {
+    if (evento.key !== 'Delete' && evento.key !== 'Backspace') return;
+
+    // nao atrapalha quem esta escrevendo num campo
+    const foco = document.activeElement;
+    if (foco && ['INPUT', 'TEXTAREA', 'SELECT'].includes(foco.tagName)) return;
+
+    if (!elementoSelecionado()) return;
+
+    evento.preventDefault();
+    excluirSelecao();
 });
 
 // ---- Inicio --------------------------------------------------------------

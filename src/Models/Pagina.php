@@ -34,6 +34,42 @@ final class Pagina
         return ['id' => (int) $pdo->lastInsertId(), 'ordem' => $ordem];
     }
 
+    public static function contar(int $cadernoId): int
+    {
+        $sql = Database::conexao()->prepare('SELECT COUNT(*) FROM pagina WHERE caderno_id = ?');
+        $sql->execute([$cadernoId]);
+
+        return (int) $sql->fetchColumn();
+    }
+
+    /**
+     * Apaga a pagina e renumera as que sobraram, para a ordem continuar
+     * 1, 2, 3... sem buraco. Os elementos somem junto (ON DELETE CASCADE).
+     *
+     * Vai tudo numa transacao: apagar sem renumerar deixaria o caderno
+     * com "Pagina 1, Pagina 3".
+     */
+    public static function excluir(int $id, int $cadernoId): void
+    {
+        $pdo = Database::conexao();
+
+        $pdo->beginTransaction();
+
+        $pdo->prepare('DELETE FROM pagina WHERE id = ?')->execute([$id]);
+
+        $sql = $pdo->prepare(
+            'SELECT id FROM pagina WHERE caderno_id = ? ORDER BY ordem'
+        );
+        $sql->execute([$cadernoId]);
+
+        $renumerar = $pdo->prepare('UPDATE pagina SET ordem = ? WHERE id = ?');
+        foreach ($sql->fetchAll() as $posicao => $pagina) {
+            $renumerar->execute([$posicao + 1, $pagina['id']]);
+        }
+
+        $pdo->commit();
+    }
+
     /**
      * Busca a pagina junto com o tipo_folha e o dono do caderno
      * (o usuario_id serve para conferir se a pagina e de quem esta logado).
