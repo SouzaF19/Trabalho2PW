@@ -18,6 +18,8 @@ a aplicação abre sem depender de internet.
 | Caneta, Lápis, Borracha | desenho à mão livre, com cor e espessura |
 | Mover | arrasta textos e imagens; nas imagens aparecem as alças de redimensionar |
 
+Na lista de cadernos, o lápis no canto do card renomeia e troca o tipo de folha.
+
 Desfazer, Limpar página, Salvar e navegação entre páginas ficam na lateral.
 
 ## Como rodar
