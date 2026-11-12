@@ -39,7 +39,19 @@ final class AuthController
         $token = Usuario::gerarToken();
         $id    = Usuario::criar($nome, $email, $senha, $token);
 
-        $link = ConfirmacaoController::enviarLink($nome, $email, $token);
+        // A conta ja existe neste ponto. Se o envio falhar (servidor de
+        // e-mail fora do ar, por exemplo), o cadastro nao pode virar erro:
+        // o usuario ficaria com conta criada e a impressao de que nao deu
+        // certo. Ele entra e reenvia o e-mail pelo aviso na tela.
+        $extras = [];
+
+        try {
+            $link   = ConfirmacaoController::enviarLink($nome, $email, $token);
+            $extras = ConfirmacaoController::linkParaDemonstracao($link);
+        } catch (\Throwable $e) {
+            error_log('Falha ao enviar o e-mail de confirmacao: ' . $e->getMessage());
+            $extras = ['aviso' => 'Sua conta foi criada, mas nao conseguimos enviar o e-mail de confirmacao. Use "Reenviar e-mail" mais tarde.'];
+        }
 
         // Ja deixa logado. O e-mail ainda nao esta confirmado: as telas
         // mostram um aviso ate o usuario abrir o link.
@@ -48,7 +60,7 @@ final class AuthController
         Response::json([
             'ok'      => true,
             'usuario' => ['id' => $id, 'nome' => $nome],
-        ] + ConfirmacaoController::linkParaDemonstracao($link), 201);
+        ] + $extras, 201);
     }
 
     /** POST /api/login */

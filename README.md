@@ -55,9 +55,10 @@ O cadastro gera um link de confirmação. **Não é preciso configurar nada para
 isso funcionar:** o modo padrão é `log`, que em vez de enviar grava a mensagem
 em `storage/emails.log` — com o link dentro.
 
-Com `debug` ligado, o link também aparece direto na tela, no aviso
-"Confirme seu e-mail" → botão **Reenviar e-mail**. Dá para confirmar a conta
-na hora, sem abrir arquivo nenhum.
+No modo `log` o link também aparece direto na tela, no aviso "Confirme seu
+e-mail" → botão **Reenviar e-mail**. Dá para confirmar a conta na hora, sem
+abrir arquivo nenhum — e isso independe do `debug`, então funciona do mesmo
+jeito na hora de apresentar.
 
 Não confirmar **não impede o login**: o usuário entra e vê um aviso até
 abrir o link.

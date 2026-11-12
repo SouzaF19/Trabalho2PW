@@ -73,7 +73,14 @@ final class ConfirmacaoController
         }
 
         $token = Usuario::renovarToken($id);
-        $link  = self::enviarLink($usuario['nome'], $usuario['email'], $token);
+
+        try {
+            $link = self::enviarLink($usuario['nome'], $usuario['email'], $token);
+        } catch (\Throwable $e) {
+            error_log('Falha ao reenviar o e-mail de confirmacao: ' . $e->getMessage());
+            Response::erro('Nao conseguimos enviar o e-mail agora. Tente de novo em instantes.', 500);
+            return;
+        }
 
         Response::json(['ok' => true] + self::linkParaDemonstracao($link));
     }
@@ -104,15 +111,16 @@ final class ConfirmacaoController
     }
 
     /**
-     * No modo 'log' nenhum e-mail sai de verdade, entao com debug ligado
-     * devolvemos o link na resposta: da para confirmar a conta na hora,
-     * sem abrir o arquivo de log. Com debug desligado, nunca aparece.
+     * No modo 'log' nenhum e-mail sai de verdade, entao devolvemos o link
+     * na resposta: sem isso ninguem conseguiria confirmar a conta, porque
+     * a mensagem so existe dentro de storage/emails.log.
+     *
+     * O que decide e o modo, nao o 'debug': quando o modo for 'smtp' o
+     * e-mail chega de verdade, e ai o link nunca aparece na resposta.
      */
     public static function linkParaDemonstracao(string $link): array
     {
-        $emModoLog = Config::get('email')['modo'] === 'log';
-
-        return ($emModoLog && Config::get('debug') === true)
+        return Config::get('email')['modo'] === 'log'
             ? ['link_confirmacao' => $link]
             : [];
     }
