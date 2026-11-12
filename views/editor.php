@@ -66,11 +66,11 @@ require __DIR__ . '/partials/cabecalho.php';
 
         <div class="acoes-pagina">
             <button type="button" class="btn-lateral" id="btn-excluir-selecao" disabled
-                    title="Selecione um texto ou imagem no modo Mover">Excluir seleção</button>
-            <button type="button" class="btn-lateral" id="btn-desfazer">Desfazer</button>
+                    title="Selecione um texto ou imagem no modo Mover (tecla Delete)">Excluir seleção</button>
+            <button type="button" class="btn-lateral" id="btn-desfazer" title="Ctrl+Z">Desfazer</button>
             <button type="button" class="btn-lateral" id="btn-limpar">Limpar página</button>
             <button type="button" class="btn-lateral" id="btn-exportar" title="Baixar esta página como imagem">Baixar PNG</button>
-            <button type="button" class="btn-principal btn-pequeno" id="btn-salvar">Salvar</button>
+            <button type="button" class="btn-principal btn-pequeno" id="btn-salvar" title="Ctrl+S">Salvar</button>
             <span class="status-salvar" id="status-salvar"></span>
         </div>
     </aside>
