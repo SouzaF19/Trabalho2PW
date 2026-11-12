@@ -45,6 +45,12 @@ let indicePagina = 0;
 let desenhando   = false;
 let linhaAtual   = null;
 
+// Campo de escrever texto que estiver aberto sobre a folha, se houver.
+// Ficam aqui em cima porque escolherFerramenta() ja usa o fechamento logo
+// no carregamento da pagina, antes do resto do arquivo ser lido.
+let campoAberto = null;
+let fecharCampoAberto = () => {};
+
 // ---- Konva ---------------------------------------------------------------
 
 const stage = new Konva.Stage({
@@ -107,6 +113,10 @@ function excluirSelecao() {
 // ---- Ferramentas ---------------------------------------------------------
 
 function escolherFerramenta(nome) {
+    // Um campo de texto aberto fica por cima da folha e engole os cliques da
+    // area dele. Trocar de ferramenta confirma o que estava escrito e fecha.
+    fecharCampoAberto();
+
     ferramenta = nome;
 
     // marca o botao ativo e troca o cursor da folha
@@ -185,11 +195,13 @@ function criarTexto(x, y, conteudo, tamanho, cor) {
 const FONTE_TEXTO = 'Lora, Georgia, serif';
 const TAMANHO_TEXTO = 18;
 
-let campoAberto = null;
-
 // Sem `no`, cria um texto novo em (x, y). Com `no`, edita aquele texto.
 function abrirCampoDeTexto(x, y, no) {
-    if (campoAberto) return;
+    // Ja havia um campo aberto? Confirma o que estava nele antes de abrir o
+    // proximo. Nao da para so desistir aqui: o navegador dispara o blur DEPOIS
+    // do pointerdown, entao desistir faria o clique seguinte ser engolido -
+    // ele fecharia o campo anterior sem abrir o novo.
+    fecharCampoAberto();
 
     const tamanho = no ? no.fontSize() : TAMANHO_TEXTO;
     const cor     = no ? no.fill() : inputCor.value;
@@ -207,6 +219,7 @@ function abrirCampoDeTexto(x, y, no) {
 
     folha.appendChild(campo);
     campoAberto = campo;
+    fecharCampoAberto = () => fechar(true);
 
     ajustarTamanhoDoCampo(campo);
     campo.addEventListener('input', () => ajustarTamanhoDoCampo(campo));
@@ -229,6 +242,7 @@ function abrirCampoDeTexto(x, y, no) {
     function fechar(confirmar) {
         if (campoAberto !== campo) return;   // ja foi fechado
         campoAberto = null;
+        fecharCampoAberto = () => {};
 
         const conteudo = campo.value.trim();
         campo.remove();
@@ -267,6 +281,9 @@ function ajustarTamanhoDoCampo(campo) {
 
 stage.on('pointerdown', (evento) => {
     const pos = stage.getPointerPosition();
+
+    // o Konva devolve null quando ainda nao sabe onde o ponteiro esta
+    if (pos === null) return;
 
     if (ferramenta === 'mover') {
         // o Konva cuida do arrastar; aqui so decidimos quem fica selecionado
