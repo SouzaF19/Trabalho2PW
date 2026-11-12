@@ -69,6 +69,7 @@ require __DIR__ . '/partials/cabecalho.php';
                     title="Selecione um texto ou imagem no modo Mover">Excluir seleção</button>
             <button type="button" class="btn-lateral" id="btn-desfazer">Desfazer</button>
             <button type="button" class="btn-lateral" id="btn-limpar">Limpar página</button>
+            <button type="button" class="btn-lateral" id="btn-exportar" title="Baixar esta página como imagem">Baixar PNG</button>
             <button type="button" class="btn-principal btn-pequeno" id="btn-salvar">Salvar</button>
             <span class="status-salvar" id="status-salvar"></span>
         </div>
