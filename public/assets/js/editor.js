@@ -9,7 +9,17 @@
 const LARGURA_FOLHA = 794;   // A4 a 96 dpi (mesmo valor do CSS)
 const ALTURA_FOLHA  = 1123;
 
+// Medidas e cores das pautas. Precisam bater com as do CSS (.folha), porque
+// na exportacao em PNG a folha e redesenhada no canvas.
+const ESPACO_PAUTA  = 34;
+const MARGEM_X      = 130;
+const COR_PAPEL     = '#f5f5f7';
+const COR_PAUTA     = '#a9d6e5';
+const COR_MARGEM    = '#e07a7a';
+const COR_QUADRICULA = '#c9d7e6';
+
 const cadernoId = Number(document.getElementById('editor').dataset.cadernoId);
+const tipoFolha = document.getElementById('editor').dataset.tipoFolha;
 
 const folha        = document.getElementById('folha');
 const botoes       = document.querySelectorAll('.ferramenta[data-ferramenta]');
@@ -24,6 +34,9 @@ const btnProxima   = document.getElementById('btn-pagina-proxima');
 const btnNova      = document.getElementById('btn-pagina-nova');
 const rotuloPagina = document.getElementById('rotulo-pagina');
 const inputArquivo = document.getElementById('arquivo-imagem');
+const btnExcluirSel = document.getElementById('btn-excluir-selecao');
+const btnExcluirPag = document.getElementById('btn-pagina-excluir');
+const btnExportar   = document.getElementById('btn-exportar');
 
 // estado do editor
 let ferramenta   = 'caneta';
@@ -31,6 +44,12 @@ let paginas      = [];     // [{id, ordem}]
 let indicePagina = 0;
 let desenhando   = false;
 let linhaAtual   = null;
+
+// Campo de escrever texto que estiver aberto sobre a folha, se houver.
+// Ficam aqui em cima porque escolherFerramenta() ja usa o fechamento logo
+// no carregamento da pagina, antes do resto do arquivo ser lido.
+let campoAberto = null;
+let fecharCampoAberto = () => {};
 
 // ---- Konva ---------------------------------------------------------------
 
@@ -55,7 +74,7 @@ camada.add(transformador);
 
 // Esvazia a folha sem perder o transformador
 function limparCamada() {
-    transformador.nodes([]);
+    selecionar(null);
     transformador.remove();        // tira da camada, mas nao destroi
     camada.destroyChildren();
     camada.add(transformador);
@@ -66,21 +85,50 @@ function elementosDaCamada() {
     return camada.getChildren((no) => no !== transformador);
 }
 
+// ---- Selecao (modo "mover") ----------------------------------------------
+
+// Marca um texto ou imagem como selecionado, para dar para excluir.
+// Imagem ganha as alcas de redimensionar; texto so a moldura, porque
+// esticar texto pelo scale deformaria a fonte.
+function selecionar(no) {
+    transformador.nodes(no ? [no] : []);
+    transformador.resizeEnabled(no !== null && no.hasName('imagem'));
+
+    btnExcluirSel.disabled = no === null;
+}
+
+function elementoSelecionado() {
+    return transformador.nodes()[0] ?? null;
+}
+
+function excluirSelecao() {
+    const no = elementoSelecionado();
+    if (!no) return;
+
+    selecionar(null);
+    no.destroy();
+    marcarAlterado();
+}
+
 // ---- Ferramentas ---------------------------------------------------------
 
 function escolherFerramenta(nome) {
+    // Um campo de texto aberto fica por cima da folha e engole os cliques da
+    // area dele. Trocar de ferramenta confirma o que estava escrito e fecha.
+    fecharCampoAberto();
+
     ferramenta = nome;
 
     // marca o botao ativo e troca o cursor da folha
     botoes.forEach((b) => b.classList.toggle('ativo', b.dataset.ferramenta === nome));
-    folha.className = 'folha folha-' + document.getElementById('editor').dataset.tipoFolha + ' ferramenta-' + nome;
+    folha.className = 'folha folha-' + tipoFolha + ' ferramenta-' + nome;
 
     // textos e imagens so podem ser arrastados no modo "mover"
     camada.find('.texto').forEach((t) => t.draggable(nome === 'mover'));
     camada.find('.imagem').forEach((i) => i.draggable(nome === 'mover'));
 
     // saiu do modo "mover": esconde as alcas de redimensionar
-    if (nome !== 'mover') transformador.nodes([]);
+    if (nome !== 'mover') selecionar(null);
 }
 
 botoes.forEach((b) => b.addEventListener('click', () => {
@@ -147,11 +195,13 @@ function criarTexto(x, y, conteudo, tamanho, cor) {
 const FONTE_TEXTO = 'Lora, Georgia, serif';
 const TAMANHO_TEXTO = 18;
 
-let campoAberto = null;
-
 // Sem `no`, cria um texto novo em (x, y). Com `no`, edita aquele texto.
 function abrirCampoDeTexto(x, y, no) {
-    if (campoAberto) return;
+    // Ja havia um campo aberto? Confirma o que estava nele antes de abrir o
+    // proximo. Nao da para so desistir aqui: o navegador dispara o blur DEPOIS
+    // do pointerdown, entao desistir faria o clique seguinte ser engolido -
+    // ele fecharia o campo anterior sem abrir o novo.
+    fecharCampoAberto();
 
     const tamanho = no ? no.fontSize() : TAMANHO_TEXTO;
     const cor     = no ? no.fill() : inputCor.value;
@@ -169,6 +219,7 @@ function abrirCampoDeTexto(x, y, no) {
 
     folha.appendChild(campo);
     campoAberto = campo;
+    fecharCampoAberto = () => fechar(true);
 
     ajustarTamanhoDoCampo(campo);
     campo.addEventListener('input', () => ajustarTamanhoDoCampo(campo));
@@ -186,11 +237,16 @@ function abrirCampoDeTexto(x, y, no) {
     // clicou fora: confirma o que foi escrito
     campo.addEventListener('blur', () => fechar(true));
 
-    campo.focus();
+    // O foco vai no proximo ciclo, depois que o clique que abriu o campo
+    // terminar de ser processado pelo navegador (ver o mousedown da folha,
+    // logo abaixo de "Desenhar"). No toque o mousedown de compatibilidade
+    // chega ainda mais tarde, e este atraso nao basta sozinho.
+    setTimeout(() => campo.focus(), 0);
 
     function fechar(confirmar) {
         if (campoAberto !== campo) return;   // ja foi fechado
         campoAberto = null;
+        fecharCampoAberto = () => {};
 
         const conteudo = campo.value.trim();
         campo.remove();
@@ -227,8 +283,25 @@ function ajustarTamanhoDoCampo(campo) {
 
 // ---- Desenhar (Pointer Events: mouse, toque e caneta) --------------------
 
+// Com a ferramenta Texto, clicar na folha nao pode tirar o foco do campo que
+// acabou de abrir. Num clique o navegador dispara pointerdown e DEPOIS
+// mousedown; a acao padrao do mousedown sobre o canvas (que nao recebe foco)
+// e mover o foco para a pagina. O campo perdia o foco, fechava vazio, e o
+// usuario clicava sem ver nada acontecer.
+folha.addEventListener('mousedown', (evento) => {
+    if (ferramenta !== 'texto') return;
+
+    // clique dentro do proprio campo: deixa o navegador posicionar o cursor
+    if (evento.target.closest('.editor-texto')) return;
+
+    evento.preventDefault();
+});
+
 stage.on('pointerdown', (evento) => {
     const pos = stage.getPointerPosition();
+
+    // o Konva devolve null quando ainda nao sabe onde o ponteiro esta
+    if (pos === null) return;
 
     if (ferramenta === 'mover') {
         // o Konva cuida do arrastar; aqui so decidimos quem fica selecionado
@@ -236,7 +309,7 @@ stage.on('pointerdown', (evento) => {
 
         if (alvo.getParent() === transformador) return;   // clicou nas proprias alcas
 
-        transformador.nodes(alvo.hasName('imagem') ? [alvo] : []);
+        selecionar(alvo.hasName('imagem') || alvo.hasName('texto') ? alvo : null);
         return;
     }
 
@@ -280,14 +353,17 @@ folha.addEventListener('pointerleave', terminarTraco);
 
 // ---- Desfazer / limpar ---------------------------------------------------
 
-btnDesfazer.addEventListener('click', () => {
+// Remove o ultimo elemento. Usado pelo botao e pelo Ctrl+Z.
+function desfazer() {
     const filhos = elementosDaCamada();
     if (filhos.length === 0) return;
 
-    transformador.nodes([]);                // o selecionado pode ser o que vai sumir
+    selecionar(null);                      // o selecionado pode ser o que vai sumir
     filhos[filhos.length - 1].destroy();    // remove o ultimo elemento
     marcarAlterado();
-});
+}
+
+btnDesfazer.addEventListener('click', desfazer);
 
 btnLimpar.addEventListener('click', () => {
     if (!confirm('Apagar tudo desta página?')) return;
@@ -466,6 +542,9 @@ async function abrirPagina(indice) {
     rotuloPagina.textContent = 'Página ' + (indice + 1) + ' de ' + paginas.length;
     btnAnterior.disabled = indice === 0;
     btnProxima.disabled  = indice === paginas.length - 1;
+
+    // o caderno nao pode ficar sem nenhuma pagina
+    btnExcluirPag.disabled = paginas.length <= 1;
 }
 
 // Antes de trocar de pagina, pergunta se quer salvar
@@ -485,6 +564,69 @@ btnNova.addEventListener('click', async () => {
     trocarPagina(paginas.length - 1);
 });
 
+btnExcluirPag.addEventListener('click', async () => {
+    if (!confirm('Excluir a página ' + (indicePagina + 1) + '? Tudo que está nela será apagado.')) return;
+
+    try {
+        await chamarApi('DELETE', '/api/paginas/' + paginas[indicePagina].id);
+
+        // a lista vem do servidor de novo: as paginas seguintes foram renumeradas
+        paginas = await chamarApi('GET', '/api/cadernos/' + cadernoId + '/paginas');
+
+        // fica na mesma posicao; se apagou a ultima, volta uma
+        abrirPagina(Math.min(indicePagina, paginas.length - 1));
+    } catch (erro) {
+        status.textContent = erro.message;
+        status.className = 'status-salvar erro';
+    }
+});
+
+// ---- Excluir o elemento selecionado --------------------------------------
+
+btnExcluirSel.addEventListener('click', excluirSelecao);
+
+// ---- Atalhos de teclado --------------------------------------------------
+
+// Enquanto o usuario escreve num campo, o teclado e dele: Ctrl+Z precisa
+// desfazer o que ele digitou, nao o ultimo traco da folha.
+function escrevendoNumCampo() {
+    const foco = document.activeElement;
+
+    return foco !== null && ['INPUT', 'TEXTAREA', 'SELECT'].includes(foco.tagName);
+}
+
+document.addEventListener('keydown', (evento) => {
+    if (escrevendoNumCampo()) return;
+
+    // Delete / Backspace: tira o elemento selecionado
+    if (evento.key === 'Delete' || evento.key === 'Backspace') {
+        if (!elementoSelecionado()) return;
+
+        evento.preventDefault();
+        excluirSelecao();
+        return;
+    }
+
+    // Esc: solta a selecao
+    if (evento.key === 'Escape') {
+        selecionar(null);
+        return;
+    }
+
+    // Daqui para baixo, so os atalhos com Ctrl (ou Cmd, no Mac)
+    if (!evento.ctrlKey && !evento.metaKey) return;
+
+    const tecla = evento.key.toLowerCase();
+
+    if (tecla === 's') {
+        evento.preventDefault();   // senao o navegador abre "salvar pagina"
+        salvar();
+    } else if (tecla === 'z') {
+        evento.preventDefault();
+        desfazer();
+    }
+});
+
 // ---- Inicio --------------------------------------------------------------
 
 async function iniciar() {
@@ -500,3 +642,73 @@ async function iniciar() {
 }
 
 iniciar();
+
+// ---- Exportar a pagina como imagem ---------------------------------------
+//
+// O Konva so desenha o que o usuario fez: as pautas estao no CSS da div,
+// fora do canvas. Para a imagem sair com a folha inteira, desenhamos o
+// papel e as pautas numa camada temporaria, exportamos, e tiramos ela.
+
+function criarCamadaDeFundo() {
+    const fundo = new Konva.Layer({ listening: false });
+
+    fundo.add(new Konva.Rect({
+        x: 0, y: 0, width: LARGURA_FOLHA, height: ALTURA_FOLHA, fill: COR_PAPEL,
+    }));
+
+    const linha = (pontos, cor) => fundo.add(new Konva.Line({
+        points: pontos, stroke: cor, strokeWidth: 1,
+    }));
+
+    // o meio-pixel evita que a linha de 1px saia borrada em dois pixels
+    if (tipoFolha === 'pautada' || tipoFolha === 'quadriculada') {
+        const cor = tipoFolha === 'pautada' ? COR_PAUTA : COR_QUADRICULA;
+        for (let y = ESPACO_PAUTA; y <= ALTURA_FOLHA; y += ESPACO_PAUTA) {
+            linha([0, y - 0.5, LARGURA_FOLHA, y - 0.5], cor);
+        }
+    }
+
+    if (tipoFolha === 'quadriculada') {
+        for (let x = ESPACO_PAUTA; x <= LARGURA_FOLHA; x += ESPACO_PAUTA) {
+            linha([x - 0.5, 0, x - 0.5, ALTURA_FOLHA], COR_QUADRICULA);
+        }
+    }
+
+    if (tipoFolha === 'pautada') {
+        linha([MARGEM_X + 0.5, 0, MARGEM_X + 0.5, ALTURA_FOLHA], COR_MARGEM);
+    }
+
+    return fundo;
+}
+
+// "Caderno de Cálculo" + pagina 2 -> caderno-de-calculo-pagina-2.png
+function nomeDoArquivo() {
+    const titulo = document.querySelector('.lateral-titulo').textContent
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')   // tira os acentos
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .toLowerCase();
+
+    return (titulo || 'caderno') + '-pagina-' + (indicePagina + 1) + '.png';
+}
+
+btnExportar.addEventListener('click', () => {
+    selecionar(null);   // as alcas de redimensionar nao podem sair na imagem
+
+    const fundo = criarCamadaDeFundo();
+    stage.add(fundo);
+    fundo.moveToBottom();
+
+    // pixelRatio 2: a imagem sai com o dobro da resolucao, para dar para imprimir
+    const imagem = stage.toDataURL({ pixelRatio: 2 });
+
+    fundo.destroy();
+
+    const link = document.createElement('a');
+    link.download = nomeDoArquivo();
+    link.href = imagem;
+    link.click();
+
+    status.textContent = 'Imagem baixada.';
+    status.className = 'status-salvar';
+});

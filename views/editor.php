@@ -65,9 +65,12 @@ require __DIR__ . '/partials/cabecalho.php';
         </div>
 
         <div class="acoes-pagina">
-            <button type="button" class="btn-lateral" id="btn-desfazer">Desfazer</button>
+            <button type="button" class="btn-lateral" id="btn-excluir-selecao" disabled
+                    title="Selecione um texto ou imagem no modo Mover (tecla Delete)">Excluir seleção</button>
+            <button type="button" class="btn-lateral" id="btn-desfazer" title="Ctrl+Z">Desfazer</button>
             <button type="button" class="btn-lateral" id="btn-limpar">Limpar página</button>
-            <button type="button" class="btn-principal btn-pequeno" id="btn-salvar">Salvar</button>
+            <button type="button" class="btn-lateral" id="btn-exportar" title="Baixar esta página como imagem">Baixar PNG</button>
+            <button type="button" class="btn-principal btn-pequeno" id="btn-salvar" title="Ctrl+S">Salvar</button>
             <span class="status-salvar" id="status-salvar"></span>
         </div>
     </aside>
@@ -79,6 +82,7 @@ require __DIR__ . '/partials/cabecalho.php';
             <span id="rotulo-pagina">Página –</span>
             <button type="button" class="btn-pagina" id="btn-pagina-proxima" title="Próxima página">&rsaquo;</button>
             <button type="button" class="btn-pagina btn-pagina-nova" id="btn-pagina-nova">+ Nova página</button>
+            <button type="button" class="btn-pagina btn-pagina-excluir" id="btn-pagina-excluir" title="Excluir esta página">Excluir página</button>
         </nav>
 
         <!-- O Konva desenha dentro desta div; as pautas vem do CSS (.folha-pautada etc.) -->

@@ -47,6 +47,22 @@ final class Caderno
         return self::buscar($id, $usuarioId);
     }
 
+    /**
+     * Troca o titulo e o tipo de folha. Devolve o caderno atualizado,
+     * ou null se o caderno nao existir ou for de outro usuario.
+     */
+    public static function atualizar(int $id, int $usuarioId, string $titulo, string $tipoFolha): ?array
+    {
+        $sql = Database::conexao()->prepare(
+            'UPDATE caderno SET titulo = ?, tipo_folha = ? WHERE id = ? AND usuario_id = ?'
+        );
+        $sql->execute([$titulo, $tipoFolha, $id, $usuarioId]);
+
+        // rowCount() da 0 quando nada mudou de valor, entao quem decide se o
+        // caderno existe e a busca - nao a contagem de linhas afetadas.
+        return self::buscar($id, $usuarioId);
+    }
+
     /** Devolve true se apagou. Paginas e elementos vao junto (ON DELETE CASCADE). */
     public static function excluir(int $id, int $usuarioId): bool
     {

@@ -33,6 +33,22 @@ require __DIR__ . '/partials/topo.php';
             <div class="miniatura"></div>
             <div class="caderno-nome"></div>
         </a>
+
+        <!-- Aparece no lugar do nome quando se clica no lapis -->
+        <form class="caderno-edicao" hidden>
+            <input type="text" name="titulo" maxlength="150" required aria-label="Nome do caderno">
+            <select name="tipo_folha" aria-label="Tipo de folha">
+                <option value="pautada">Pautada</option>
+                <option value="lisa">Lisa</option>
+                <option value="quadriculada">Quadriculada</option>
+            </select>
+            <div class="caderno-edicao-acoes">
+                <button type="submit">Salvar</button>
+                <button type="button" class="cancelar">Cancelar</button>
+            </div>
+        </form>
+
+        <button type="button" class="caderno-editar" title="Renomear ou trocar a folha">&#9998;</button>
         <button type="button" class="caderno-excluir" title="Excluir caderno">&times;</button>
     </li>
 </template>

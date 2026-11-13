@@ -114,10 +114,18 @@ Sem corpo. Gera um token novo para o usuário logado e envia de novo.
 | **400** | o e-mail já está confirmado |
 | **401** | não está logado |
 
-> Quando `modo` é `log` **e** `debug` é `true`, as respostas de
-> `POST /api/cadastro` e `POST /api/reenviar-confirmacao` trazem também
-> `link_confirmacao`, para dar para confirmar a conta na hora sem abrir o
-> arquivo de log. Com `debug` em `false` o campo nunca aparece.
+> Quando `modo` é `log`, as respostas de `POST /api/cadastro` e
+> `POST /api/reenviar-confirmacao` trazem também `link_confirmacao`.
+> Sem isso ninguém conseguiria confirmar a conta, porque nesse modo a
+> mensagem só existe dentro de `storage/emails.log`.
+>
+> Quem decide é o **modo**, não o `debug`: com `modo` em `smtp` o e-mail
+> chega de verdade e o campo nunca aparece na resposta.
+
+**Se o envio falhar**, o cadastro não vira erro: a conta já existe nesse
+ponto, e responder 500 deixaria o usuário achando que não deu certo. A
+resposta vem com `201` e um campo `aviso`, e a pessoa pode usar o
+"Reenviar e-mail" depois.
 
 ---
 
@@ -143,6 +151,26 @@ Lista os cadernos **do usuário logado**.
 `tipo_folha` ∈ `pautada` | `lisa` | `quadriculada`.
 
 **201** → `{ "caderno": { "id": 4, "titulo": "...", "tipo_folha": "..." } }`
+
+### `PUT /api/cadernos/{id}`
+
+Renomeia o caderno e/ou troca o tipo de folha. **Os dois campos são
+opcionais**: o que não vier fica como está, então dá para só renomear.
+
+```json
+{ "titulo": "Cálculo II", "tipo_folha": "quadriculada" }
+```
+
+**200** → `{ "caderno": { "id": 6, "titulo": "...", "tipo_folha": "..." } }`
+
+| Erro | Quando |
+|---|---|
+| **400** | corpo vazio, título em branco, ou `tipo_folha` fora da lista |
+| **401** | não está logado |
+| **404** | o caderno não existe ou é de outro usuário |
+
+> Trocar o tipo de folha muda só o fundo da página: os traços, textos e
+> imagens continuam onde estavam, porque guardam coordenadas absolutas.
 
 ### `DELETE /api/cadernos/{id}`
 
@@ -254,6 +282,20 @@ daquela página (apaga os antigos, insere os novos, dentro de uma transação).
 > corretamente, e o volume de dados de uma página é pequeno. Se ficar lento,
 > aí sim vale otimizar.
 
+### `DELETE /api/paginas/{id}`
+
+Apaga a página e os elementos dela (cascata). As páginas seguintes são
+**renumeradas** na mesma transação, para a ordem continuar 1, 2, 3... sem
+buraco.
+
+**200** `{ "ok": true }`
+
+| Erro | Quando |
+|---|---|
+| **400** | é a única página do caderno — um caderno sem páginas não faz sentido |
+| **401** | não está logado |
+| **404** | a página não existe ou é de outro usuário |
+
 ---
 
 ## Upload
@@ -284,9 +326,9 @@ A URL devolvida é o que vai em `dados.url` do elemento do tipo `imagem`.
 |---|---|
 | `GET /api/ping` | ✅ |
 | `POST /api/cadastro`, `/api/login`, `/api/logout` | ✅ |
-| `GET/POST /api/cadernos`, `DELETE /api/cadernos/{id}` | ✅ |
+| `GET/POST /api/cadernos`, `PUT/DELETE /api/cadernos/{id}` | ✅ |
 | `GET/POST /api/cadernos/{id}/paginas` | ✅ |
-| `GET/PUT /api/paginas/{id}` | ✅ |
+| `GET/PUT/DELETE /api/paginas/{id}` | ✅ |
 | `POST /api/upload` | ✅ |
 | `GET /confirmar/{token}`, `POST /api/reenviar-confirmacao` | ✅ |
 | envio real por SMTP (PHPMailer) | ⬜ a fazer — hoje o modo `log` cobre o fluxo |

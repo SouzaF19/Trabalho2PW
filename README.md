@@ -18,7 +18,22 @@ a aplicação abre sem depender de internet.
 | Caneta, Lápis, Borracha | desenho à mão livre, com cor e espessura |
 | Mover | arrasta textos e imagens; nas imagens aparecem as alças de redimensionar |
 
-Desfazer, Limpar página, Salvar e navegação entre páginas ficam na lateral.
+No modo **Mover**, clicar num texto ou imagem o seleciona: a tecla `Delete`
+(ou o botão "Excluir seleção") remove o elemento.
+
+Atalhos: `Ctrl+S` salva, `Ctrl+Z` desfaz, `Delete` remove o elemento
+selecionado e `Esc` solta a seleção.
+
+Desfazer, Limpar página, Baixar PNG, Salvar e navegação entre páginas ficam
+na lateral. O "Baixar PNG" salva a folha como imagem, com as pautas e tudo
+que está escrito e desenhado.
+A barra acima da folha cria e exclui páginas.
+
+## A lista de cadernos
+
+O card de cada caderno tem dois botões no canto, que aparecem ao passar o
+mouse: o **lápis** renomeia e troca o tipo de folha, o **×** exclui o caderno
+inteiro (com as páginas e tudo que está nelas).
 
 ## Como rodar
 
@@ -55,9 +70,10 @@ O cadastro gera um link de confirmação. **Não é preciso configurar nada para
 isso funcionar:** o modo padrão é `log`, que em vez de enviar grava a mensagem
 em `storage/emails.log` — com o link dentro.
 
-Com `debug` ligado, o link também aparece direto na tela, no aviso
-"Confirme seu e-mail" → botão **Reenviar e-mail**. Dá para confirmar a conta
-na hora, sem abrir arquivo nenhum.
+No modo `log` o link também aparece direto na tela, no aviso "Confirme seu
+e-mail" → botão **Reenviar e-mail**. Dá para confirmar a conta na hora, sem
+abrir arquivo nenhum — e isso independe do `debug`, então funciona do mesmo
+jeito na hora de apresentar.
 
 Não confirmar **não impede o login**: o usuário entra e vê um aviso até
 abrir o link.

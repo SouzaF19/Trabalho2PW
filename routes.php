@@ -41,6 +41,7 @@ $router->post('/api/reenviar-confirmacao', [ConfirmacaoController::class, 'reenv
 // --- Cadernos ------------------------------------------------------------
 $router->get('/api/cadernos',                  [CadernoController::class, 'listar']);
 $router->post('/api/cadernos',                 [CadernoController::class, 'criar']);
+$router->put('/api/cadernos/{id}',             [CadernoController::class, 'atualizar']);
 $router->delete('/api/cadernos/{id}',          [CadernoController::class, 'excluir']);
 $router->get('/api/cadernos/{id}/paginas',     [CadernoController::class, 'listarPaginas']);
 $router->post('/api/cadernos/{id}/paginas',    [CadernoController::class, 'criarPagina']);
@@ -48,6 +49,7 @@ $router->post('/api/cadernos/{id}/paginas',    [CadernoController::class, 'criar
 // --- Paginas -------------------------------------------------------------
 $router->get('/api/paginas/{id}', [PaginaController::class, 'mostrar']);
 $router->put('/api/paginas/{id}', [PaginaController::class, 'salvar']);
+$router->delete('/api/paginas/{id}', [PaginaController::class, 'excluir']);
 
 // --- Upload --------------------------------------------------------------
 $router->post('/api/upload', [UploadController::class, 'receber']);
