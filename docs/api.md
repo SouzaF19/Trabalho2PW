@@ -114,10 +114,18 @@ Sem corpo. Gera um token novo para o usuário logado e envia de novo.
 | **400** | o e-mail já está confirmado |
 | **401** | não está logado |
 
-> Quando `modo` é `log` **e** `debug` é `true`, as respostas de
-> `POST /api/cadastro` e `POST /api/reenviar-confirmacao` trazem também
-> `link_confirmacao`, para dar para confirmar a conta na hora sem abrir o
-> arquivo de log. Com `debug` em `false` o campo nunca aparece.
+> Quando `modo` é `log`, as respostas de `POST /api/cadastro` e
+> `POST /api/reenviar-confirmacao` trazem também `link_confirmacao`.
+> Sem isso ninguém conseguiria confirmar a conta, porque nesse modo a
+> mensagem só existe dentro de `storage/emails.log`.
+>
+> Quem decide é o **modo**, não o `debug`: com `modo` em `smtp` o e-mail
+> chega de verdade e o campo nunca aparece na resposta.
+
+**Se o envio falhar**, o cadastro não vira erro: a conta já existe nesse
+ponto, e responder 500 deixaria o usuário achando que não deu certo. A
+resposta vem com `201` e um campo `aviso`, e a pessoa pode usar o
+"Reenviar e-mail" depois.
 
 ---
 
