@@ -39,14 +39,23 @@ final class AuthController
         $token = Usuario::gerarToken();
         $id    = Usuario::criar($nome, $email, $senha, $token);
 
-        $link = ConfirmacaoController::enviarLink($nome, $email, $token);
-
-        // Ja deixa logado. O e-mail ainda nao esta confirmado: as telas
-        // mostram um aviso ate o usuario abrir o link.
-        entrar($id, $nome, false);
+        try {
+            $link = ConfirmacaoController::enviarLink($nome, $email, $token);
+        } catch (\Throwable $e) {
+            Response::json([
+                'ok' => false,
+                'conta_criada' => true,
+                'email_enviado' => false,
+                'erro' => 'Conta criada, mas nao foi possivel enviar o e-mail de confirmacao. ' .
+                    'Nao se cadastre novamente: na tela de login, preencha seu e-mail e senha e use Reenviar e-mail antes de Entrar.',
+            ], 503);
+            return;
+        }
 
         Response::json([
             'ok'      => true,
+            'conta_criada' => true,
+            'email_enviado' => true,
             'usuario' => ['id' => $id, 'nome' => $nome],
         ] + ConfirmacaoController::linkParaDemonstracao($link), 201);
     }
@@ -63,10 +72,16 @@ final class AuthController
             return;
         }
 
-        // Quem ainda nao confirmou o e-mail entra assim mesmo, mas ve um
-        // aviso nas telas. Bloquear o login deixaria a pessoa de fora caso
-        // o e-mail demorasse ou caisse no spam.
-        entrar((int) $usuario['id'], $usuario['nome'], (int) $usuario['email_confirmado'] === 1);
+        if ((int) $usuario['email_confirmado'] !== 1) {
+            Response::json([
+                'ok' => false,
+                'codigo' => 'email_nao_confirmado',
+                'erro' => 'Verifique seu e-mail para validar sua conta antes de entrar. Se necessario, use Reenviar e-mail com seu e-mail e senha.',
+            ], 403);
+            return;
+        }
+
+        entrar((int) $usuario['id'], $usuario['nome'], true);
 
         Response::json([
             'ok'      => true,

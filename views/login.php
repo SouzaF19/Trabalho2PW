@@ -23,7 +23,11 @@ require __DIR__ . '/partials/cabecalho.php';
             <input type="password" name="senha" placeholder="Senha" autocomplete="current-password" required>
         </label>
 
-        <p class="mensagem-erro" id="erro" hidden></p>
+        <p id="aviso-cadastro" role="status" hidden></p>
+        <p class="mensagem-erro" id="erro" role="alert" hidden></p>
+        <p>Para reenviar a confirmação, preencha seu e-mail e senha acima.</p>
+        <button type="button" id="btn-reenviar">Reenviar confirmação</button>
+        <p id="aviso-estado" role="status" aria-live="polite"></p>
 
         <a class="link-auth" href="<?= urlBase() . '/cadastro' ?>">Cadastrar</a>
 

@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 // --- Sessao / login -------------------------------------------------------
 
-/** Guarda o usuario na sessao depois do login ou cadastro. */
+/** Guarda apenas um usuario confirmado na sessao depois do login. */
 function entrar(int $usuarioId, string $nome, bool $emailConfirmado = true): void
 {
     $_SESSION['usuario_id']         = $usuarioId;
@@ -19,7 +19,7 @@ function entrar(int $usuarioId, string $nome, bool $emailConfirmado = true): voi
 /** false enquanto o usuario nao abriu o link de confirmacao do e-mail. */
 function usuarioConfirmado(): bool
 {
-    return ($_SESSION['usuario_confirmado'] ?? true) === true;
+    return usuarioLogado() !== null;
 }
 
 function sair(): void
@@ -30,7 +30,19 @@ function sair(): void
 /** Id do usuario logado, ou null se ninguem estiver logado. */
 function usuarioLogado(): ?int
 {
-    return isset($_SESSION['usuario_id']) ? (int) $_SESSION['usuario_id'] : null;
+    if (!isset($_SESSION['usuario_id'])) {
+        return null;
+    }
+
+    // Revalida tambem sessoes criadas antes do bloqueio de confirmacao.
+    $usuario = \App\Models\Usuario::buscarPorId((int) $_SESSION['usuario_id']);
+    if ($usuario === null || (int) $usuario['email_confirmado'] !== 1) {
+        unset($_SESSION['usuario_id'], $_SESSION['usuario_nome'], $_SESSION['usuario_confirmado']);
+        return null;
+    }
+
+    $_SESSION['usuario_confirmado'] = true;
+    return (int) $usuario['id'];
 }
 
 function nomeUsuarioLogado(): string

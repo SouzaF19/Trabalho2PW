@@ -15,6 +15,11 @@ spl_autoload_register(function (string $classe): void {
     $prefixo = 'App\\';
     $baseDir = __DIR__ . '/';
 
+    if (str_starts_with($classe, 'PHPMailer\\PHPMailer\\')) {
+        $prefixo = 'PHPMailer\\PHPMailer\\';
+        $baseDir = dirname(__DIR__) . '/lib/PHPMailer/src/';
+    }
+
     // A classe pertence ao nosso namespace? Se nao, deixa outro autoloader tentar.
     if (!str_starts_with($classe, $prefixo)) {
         return;

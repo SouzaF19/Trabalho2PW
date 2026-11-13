@@ -35,7 +35,7 @@ final class ConfirmacaoController
             renderizar('confirma_email', [
                 'titulo' => 'Link expirado',
                 'ok'     => false,
-                'motivo' => 'Este link passou da validade. Entre na sua conta e peça um novo.',
+                'motivo' => 'Este link passou da validade. Na tela de login, preencha seu e-mail e senha e use Reenviar e-mail.',
             ]);
             return;
         }
@@ -55,25 +55,28 @@ final class ConfirmacaoController
         ]);
     }
 
-    /** POST /api/reenviar-confirmacao - gera um link novo para quem esta logado. */
+    /** POST /api/reenviar-confirmacao - valida credenciais antes de gerar um link. */
     public function reenviar(Request $req, array $params): void
     {
-        $id = usuarioLogado();
-
-        if ($id === null) {
-            Response::erro('Voce precisa estar logado.', 401);
+        $corpo = $req->corpoJson();
+        $usuario = Usuario::buscarPorEmail(trim($corpo['email'] ?? ''));
+        if ($usuario === null || !password_verify($corpo['senha'] ?? '', $usuario['senha_hash'])) {
+            Response::erro('E-mail ou senha incorretos.', 401);
             return;
         }
 
-        $usuario = Usuario::buscarPorId($id);
-
-        if ($usuario === null || (int) $usuario['email_confirmado'] === 1) {
+        if ((int) $usuario['email_confirmado'] === 1) {
             Response::erro('Este e-mail ja esta confirmado.');
             return;
         }
 
-        $token = Usuario::renovarToken($id);
-        $link  = self::enviarLink($usuario['nome'], $usuario['email'], $token);
+        $token = Usuario::renovarToken((int) $usuario['id']);
+        try {
+            $link = self::enviarLink($usuario['nome'], $usuario['email'], $token);
+        } catch (\Throwable $e) {
+            Response::erro('Nao foi possivel enviar o e-mail de confirmacao. Aguarde e tente novamente em Reenviar e-mail.', 503);
+            return;
+        }
 
         Response::json(['ok' => true] + self::linkParaDemonstracao($link));
     }
