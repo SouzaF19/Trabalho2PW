@@ -18,7 +18,11 @@ a aplicação abre sem depender de internet.
 | Caneta, Lápis, Borracha | desenho à mão livre, com cor e espessura |
 | Mover | arrasta textos e imagens; nas imagens aparecem as alças de redimensionar |
 
+No modo **Mover**, clicar num texto ou imagem o seleciona: a tecla `Delete`
+(ou o botão "Excluir seleção") remove o elemento.
+
 Desfazer, Limpar página, Salvar e navegação entre páginas ficam na lateral.
+A barra acima da folha cria e exclui páginas.
 
 ## Como rodar
 
