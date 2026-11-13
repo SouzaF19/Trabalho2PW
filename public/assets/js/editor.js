@@ -318,14 +318,17 @@ folha.addEventListener('pointerleave', terminarTraco);
 
 // ---- Desfazer / limpar ---------------------------------------------------
 
-btnDesfazer.addEventListener('click', () => {
+// Remove o ultimo elemento. Usado pelo botao e pelo Ctrl+Z.
+function desfazer() {
     const filhos = elementosDaCamada();
     if (filhos.length === 0) return;
 
     selecionar(null);                      // o selecionado pode ser o que vai sumir
     filhos[filhos.length - 1].destroy();    // remove o ultimo elemento
     marcarAlterado();
-});
+}
+
+btnDesfazer.addEventListener('click', desfazer);
 
 btnLimpar.addEventListener('click', () => {
     if (!confirm('Apagar tudo desta página?')) return;
@@ -547,17 +550,46 @@ btnExcluirPag.addEventListener('click', async () => {
 
 btnExcluirSel.addEventListener('click', excluirSelecao);
 
-document.addEventListener('keydown', (evento) => {
-    if (evento.key !== 'Delete' && evento.key !== 'Backspace') return;
+// ---- Atalhos de teclado --------------------------------------------------
 
-    // nao atrapalha quem esta escrevendo num campo
+// Enquanto o usuario escreve num campo, o teclado e dele: Ctrl+Z precisa
+// desfazer o que ele digitou, nao o ultimo traco da folha.
+function escrevendoNumCampo() {
     const foco = document.activeElement;
-    if (foco && ['INPUT', 'TEXTAREA', 'SELECT'].includes(foco.tagName)) return;
 
-    if (!elementoSelecionado()) return;
+    return foco !== null && ['INPUT', 'TEXTAREA', 'SELECT'].includes(foco.tagName);
+}
 
-    evento.preventDefault();
-    excluirSelecao();
+document.addEventListener('keydown', (evento) => {
+    if (escrevendoNumCampo()) return;
+
+    // Delete / Backspace: tira o elemento selecionado
+    if (evento.key === 'Delete' || evento.key === 'Backspace') {
+        if (!elementoSelecionado()) return;
+
+        evento.preventDefault();
+        excluirSelecao();
+        return;
+    }
+
+    // Esc: solta a selecao
+    if (evento.key === 'Escape') {
+        selecionar(null);
+        return;
+    }
+
+    // Daqui para baixo, so os atalhos com Ctrl (ou Cmd, no Mac)
+    if (!evento.ctrlKey && !evento.metaKey) return;
+
+    const tecla = evento.key.toLowerCase();
+
+    if (tecla === 's') {
+        evento.preventDefault();   // senao o navegador abre "salvar pagina"
+        salvar();
+    } else if (tecla === 'z') {
+        evento.preventDefault();
+        desfazer();
+    }
 });
 
 // ---- Inicio --------------------------------------------------------------
