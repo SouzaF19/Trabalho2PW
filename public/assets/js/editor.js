@@ -9,7 +9,17 @@
 const LARGURA_FOLHA = 794;   // A4 a 96 dpi (mesmo valor do CSS)
 const ALTURA_FOLHA  = 1123;
 
+// Medidas e cores das pautas. Precisam bater com as do CSS (.folha), porque
+// na exportacao em PNG a folha e redesenhada no canvas.
+const ESPACO_PAUTA  = 34;
+const MARGEM_X      = 130;
+const COR_PAPEL     = '#f5f5f7';
+const COR_PAUTA     = '#a9d6e5';
+const COR_MARGEM    = '#e07a7a';
+const COR_QUADRICULA = '#c9d7e6';
+
 const cadernoId = Number(document.getElementById('editor').dataset.cadernoId);
+const tipoFolha = document.getElementById('editor').dataset.tipoFolha;
 
 const folha        = document.getElementById('folha');
 const botoes       = document.querySelectorAll('.ferramenta[data-ferramenta]');
@@ -26,6 +36,7 @@ const rotuloPagina = document.getElementById('rotulo-pagina');
 const inputArquivo = document.getElementById('arquivo-imagem');
 const btnExcluirSel = document.getElementById('btn-excluir-selecao');
 const btnExcluirPag = document.getElementById('btn-pagina-excluir');
+const btnExportar   = document.getElementById('btn-exportar');
 
 // estado do editor
 let ferramenta   = 'caneta';
@@ -100,7 +111,7 @@ function escolherFerramenta(nome) {
 
     // marca o botao ativo e troca o cursor da folha
     botoes.forEach((b) => b.classList.toggle('ativo', b.dataset.ferramenta === nome));
-    folha.className = 'folha folha-' + document.getElementById('editor').dataset.tipoFolha + ' ferramenta-' + nome;
+    folha.className = 'folha folha-' + tipoFolha + ' ferramenta-' + nome;
 
     // textos e imagens so podem ser arrastados no modo "mover"
     camada.find('.texto').forEach((t) => t.draggable(nome === 'mover'));
@@ -564,3 +575,73 @@ async function iniciar() {
 }
 
 iniciar();
+
+// ---- Exportar a pagina como imagem ---------------------------------------
+//
+// O Konva so desenha o que o usuario fez: as pautas estao no CSS da div,
+// fora do canvas. Para a imagem sair com a folha inteira, desenhamos o
+// papel e as pautas numa camada temporaria, exportamos, e tiramos ela.
+
+function criarCamadaDeFundo() {
+    const fundo = new Konva.Layer({ listening: false });
+
+    fundo.add(new Konva.Rect({
+        x: 0, y: 0, width: LARGURA_FOLHA, height: ALTURA_FOLHA, fill: COR_PAPEL,
+    }));
+
+    const linha = (pontos, cor) => fundo.add(new Konva.Line({
+        points: pontos, stroke: cor, strokeWidth: 1,
+    }));
+
+    // o meio-pixel evita que a linha de 1px saia borrada em dois pixels
+    if (tipoFolha === 'pautada' || tipoFolha === 'quadriculada') {
+        const cor = tipoFolha === 'pautada' ? COR_PAUTA : COR_QUADRICULA;
+        for (let y = ESPACO_PAUTA; y <= ALTURA_FOLHA; y += ESPACO_PAUTA) {
+            linha([0, y - 0.5, LARGURA_FOLHA, y - 0.5], cor);
+        }
+    }
+
+    if (tipoFolha === 'quadriculada') {
+        for (let x = ESPACO_PAUTA; x <= LARGURA_FOLHA; x += ESPACO_PAUTA) {
+            linha([x - 0.5, 0, x - 0.5, ALTURA_FOLHA], COR_QUADRICULA);
+        }
+    }
+
+    if (tipoFolha === 'pautada') {
+        linha([MARGEM_X + 0.5, 0, MARGEM_X + 0.5, ALTURA_FOLHA], COR_MARGEM);
+    }
+
+    return fundo;
+}
+
+// "Caderno de Cálculo" + pagina 2 -> caderno-de-calculo-pagina-2.png
+function nomeDoArquivo() {
+    const titulo = document.querySelector('.lateral-titulo').textContent
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')   // tira os acentos
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .toLowerCase();
+
+    return (titulo || 'caderno') + '-pagina-' + (indicePagina + 1) + '.png';
+}
+
+btnExportar.addEventListener('click', () => {
+    selecionar(null);   // as alcas de redimensionar nao podem sair na imagem
+
+    const fundo = criarCamadaDeFundo();
+    stage.add(fundo);
+    fundo.moveToBottom();
+
+    // pixelRatio 2: a imagem sai com o dobro da resolucao, para dar para imprimir
+    const imagem = stage.toDataURL({ pixelRatio: 2 });
+
+    fundo.destroy();
+
+    const link = document.createElement('a');
+    link.download = nomeDoArquivo();
+    link.href = imagem;
+    link.click();
+
+    status.textContent = 'Imagem baixada.';
+    status.className = 'status-salvar';
+});

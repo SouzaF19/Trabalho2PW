@@ -21,7 +21,9 @@ a aplicação abre sem depender de internet.
 No modo **Mover**, clicar num texto ou imagem o seleciona: a tecla `Delete`
 (ou o botão "Excluir seleção") remove o elemento.
 
-Desfazer, Limpar página, Salvar e navegação entre páginas ficam na lateral.
+Desfazer, Limpar página, Baixar PNG, Salvar e navegação entre páginas ficam
+na lateral. O "Baixar PNG" salva a folha como imagem, com as pautas e tudo
+que está escrito e desenhado.
 A barra acima da folha cria e exclui páginas.
 
 ## Como rodar
