@@ -237,7 +237,11 @@ function abrirCampoDeTexto(x, y, no) {
     // clicou fora: confirma o que foi escrito
     campo.addEventListener('blur', () => fechar(true));
 
-    campo.focus();
+    // O foco vai no proximo ciclo, depois que o clique que abriu o campo
+    // terminar de ser processado pelo navegador (ver o mousedown da folha,
+    // logo abaixo de "Desenhar"). No toque o mousedown de compatibilidade
+    // chega ainda mais tarde, e este atraso nao basta sozinho.
+    setTimeout(() => campo.focus(), 0);
 
     function fechar(confirmar) {
         if (campoAberto !== campo) return;   // ja foi fechado
@@ -278,6 +282,20 @@ function ajustarTamanhoDoCampo(campo) {
 }
 
 // ---- Desenhar (Pointer Events: mouse, toque e caneta) --------------------
+
+// Com a ferramenta Texto, clicar na folha nao pode tirar o foco do campo que
+// acabou de abrir. Num clique o navegador dispara pointerdown e DEPOIS
+// mousedown; a acao padrao do mousedown sobre o canvas (que nao recebe foco)
+// e mover o foco para a pagina. O campo perdia o foco, fechava vazio, e o
+// usuario clicava sem ver nada acontecer.
+folha.addEventListener('mousedown', (evento) => {
+    if (ferramenta !== 'texto') return;
+
+    // clique dentro do proprio campo: deixa o navegador posicionar o cursor
+    if (evento.target.closest('.editor-texto')) return;
+
+    evento.preventDefault();
+});
 
 stage.on('pointerdown', (evento) => {
     const pos = stage.getPointerPosition();
