@@ -144,6 +144,26 @@ Lista os cadernos **do usuário logado**.
 
 **201** → `{ "caderno": { "id": 4, "titulo": "...", "tipo_folha": "..." } }`
 
+### `PUT /api/cadernos/{id}`
+
+Renomeia o caderno e/ou troca o tipo de folha. **Os dois campos são
+opcionais**: o que não vier fica como está, então dá para só renomear.
+
+```json
+{ "titulo": "Cálculo II", "tipo_folha": "quadriculada" }
+```
+
+**200** → `{ "caderno": { "id": 6, "titulo": "...", "tipo_folha": "..." } }`
+
+| Erro | Quando |
+|---|---|
+| **400** | corpo vazio, título em branco, ou `tipo_folha` fora da lista |
+| **401** | não está logado |
+| **404** | o caderno não existe ou é de outro usuário |
+
+> Trocar o tipo de folha muda só o fundo da página: os traços, textos e
+> imagens continuam onde estavam, porque guardam coordenadas absolutas.
+
 ### `DELETE /api/cadernos/{id}`
 
 **200** `{ "ok": true }` — apaga páginas e elementos em cascata.
@@ -298,7 +318,7 @@ A URL devolvida é o que vai em `dados.url` do elemento do tipo `imagem`.
 |---|---|
 | `GET /api/ping` | ✅ |
 | `POST /api/cadastro`, `/api/login`, `/api/logout` | ✅ |
-| `GET/POST /api/cadernos`, `DELETE /api/cadernos/{id}` | ✅ |
+| `GET/POST /api/cadernos`, `PUT/DELETE /api/cadernos/{id}` | ✅ |
 | `GET/POST /api/cadernos/{id}/paginas` | ✅ |
 | `GET/PUT/DELETE /api/paginas/{id}` | ✅ |
 | `POST /api/upload` | ✅ |

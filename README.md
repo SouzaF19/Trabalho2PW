@@ -29,6 +29,12 @@ na lateral. O "Baixar PNG" salva a folha como imagem, com as pautas e tudo
 que está escrito e desenhado.
 A barra acima da folha cria e exclui páginas.
 
+## A lista de cadernos
+
+O card de cada caderno tem dois botões no canto, que aparecem ao passar o
+mouse: o **lápis** renomeia e troca o tipo de folha, o **×** exclui o caderno
+inteiro (com as páginas e tudo que está nelas).
+
 ## Como rodar
 
 ### 1. Configuração
